@@ -25,10 +25,8 @@ const SignUpPage = () => {
       <Navbar />
       <div className="flex flex-grow items-center justify-center p-6">
         {" "}
-        {/* Добавил отступы */}
         <div className="bg-black bg-opacity-50 p-8 rounded-lg shadow-lg w-full max-w-md">
           {" "}
-          {/* Увеличил отступы */}
           <h2 className="text-3xl font-bold text-center text-[rgb(255,204,1)] mb-6">
             Создать аккаунт
           </h2>
@@ -36,7 +34,6 @@ const SignUpPage = () => {
           <form onSubmit={handleSignUp}>
             <div className="mb-6">
               {" "}
-              {/* Увеличил отступы */}
               <label
                 className="block text-[rgb(255,204,1)] font-bold mb-2"
                 htmlFor="username"

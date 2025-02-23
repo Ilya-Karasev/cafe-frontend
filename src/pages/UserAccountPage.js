@@ -5,11 +5,12 @@ import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
 
 const UserAccountPage = () => {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+
   return (
     <div className="flex flex-col min-h-screen overflow-y-auto website-background bg-black bg-opacity-30">
       <Navbar />
       <div className="flex flex-grow">
-        {/* Левая часть с фотографией профиля и кнопками */}
         <div className="w-1/4 p-4 flex flex-col items-center">
           <img
             src={user.profilePicture}
@@ -29,10 +30,8 @@ const UserAccountPage = () => {
             Выйти из аккаунта
           </Link>
         </div>
-
-        {/* Правая часть с информацией о пользователе */}
-        <div className="w-3/4 p-4 flex items-start justify-center">
-          <div className="bg-black bg-opacity-50 p-6 rounded-lg shadow-lg">
+        <div className="w-3/4 p-4 flex flex-col items-center justify-center">
+          <div className="bg-black bg-opacity-50 p-6 rounded-lg shadow-lg mb-4 w-full max-w-md">
             <h2 className="text-2xl mb-4 font-bold text-white">
               Информация о пользователе
             </h2>
@@ -49,6 +48,23 @@ const UserAccountPage = () => {
               Удалить аккаунт
             </button>
           </div>
+
+          {user.role === "ADMIN" && (
+            <div className="flex justify-between w-1/3 mt-4">
+              <Link
+                to="/admin-panel"
+                className="bg-[rgb(36,34,39)] mr-6 font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors duration-300 text-center w-1/2"
+              >
+                Админ-панель
+              </Link>
+              <Link
+                to="/order-panel"
+                className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors duration-300 text-center w-1/2"
+              >
+                Панель заказов
+              </Link>
+            </div>
+          )}
         </div>
       </div>
       <Footer />
@@ -57,10 +73,3 @@ const UserAccountPage = () => {
 };
 
 export default UserAccountPage;
-
-const user = {
-  name: "Иван1 Иванов",
-  phone: "+7 (999) 123-45-67",
-  email: "ivan.ivanov@example.com",
-  profilePicture: "https://via.placeholder.com/512",
-};
