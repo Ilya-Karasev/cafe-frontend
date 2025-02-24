@@ -132,7 +132,7 @@ const CartPage = () => {
             </div>
           ) : (
             <div className="font-bold text-center text-[rgb(36,34,39)] text-2xl">
-              <p>Выберите заказ для просмотра его содержимого.</p>
+              <p>Выберите заказ для просмотра его содержимого</p>
             </div>
           )}
         </div>

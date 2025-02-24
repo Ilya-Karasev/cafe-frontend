@@ -49,7 +49,7 @@ const UserAccountPage = () => {
             </button>
           </div>
 
-          {user.role === "ADMIN" && (
+          {user.isAdmin === true && (
             <div className="flex justify-between w-1/3 mt-4">
               <Link
                 to="/admin-panel"
