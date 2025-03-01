@@ -18,10 +18,16 @@ const Footer = () => {
 
       {/* Иконка VK справа */}
       <div className="footer-social">
-        <FaVk
-          className="text-4xl cursor-pointer hover:opacity-80"
-          style={{ color: "rgb(255, 204, 1)" }}
-        />
+        <a
+          href="https://vk.com/miit_pizza"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <FaVk
+            className="text-4xl cursor-pointer hover:opacity-80"
+            style={{ color: "rgb(255, 204, 1)" }}
+          />
+        </a>
       </div>
     </footer>
   );
