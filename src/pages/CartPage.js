@@ -51,7 +51,7 @@ const CartPage = () => {
       <Navbar />
       <div className="flex flex-grow">
         {/* Список заказов слева */}
-        <div className="w-1/4 p-4 border-r border-black">
+        <div className="w-1/4 p-4 border-r border-black bg-yellow-400">
           <h2 className="text-2xl mb-4 font-bold text-center text-[rgb(36,34,39)]">
             Мои Заказы
           </h2>
@@ -116,6 +116,7 @@ const CartPage = () => {
             </ul>
           </div>
         </div>
+
 
         {/* Список товаров из выбранного заказа справа */}
         <div className="w-2/3 p-4">

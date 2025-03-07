@@ -1,6 +1,10 @@
-export const fetchMenuItems = async () => {
+export const fetchMenuItems = async (category = null) => {
   try {
-    const response = await fetch("https://caffe-production.up.railway.app/api/MenuItem");
+    let url = "https://caffe-production.up.railway.app/api/MenuItem";
+    if (category) {
+      url += `?category=${category}`;
+    }
+    const response = await fetch(url);
     if (!response.ok) throw new Error("Network response was not ok");
 
     const data = await response.json();

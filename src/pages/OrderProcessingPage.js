@@ -51,7 +51,7 @@ const OrderProcessingPage = () => {
       <Navbar />
       <div className="flex flex-grow">
         {/* Список заказов слева */}
-        <div className="w-1/4 p-4 border-r border-black">
+        <div className="w-1/4 p-4 border-r border-black bg-yellow-400">
           <h2 className="text-2xl mb-4 font-bold text-center text-[rgb(36,34,39)]">
             Заказы на обработку
           </h2>
@@ -71,7 +71,15 @@ const OrderProcessingPage = () => {
                 onClick={() => setSelectedOrder(order)}
               >
                 <span>Заказ #{order.id}</span>
-                <span className="text-[rgb(36,34,39)]">({order.status})</span>
+                <span
+                  className={`ml-2 ${
+                    hoveredOrderId === order.id
+                      ? "text-[rgb(255,204,1)]"
+                      : "text-[rgb(36,34,39)]"
+                  }`}
+                >
+                  ({order.status})
+                </span>
                 <div className="flex items-center space-x-2">
                   {/* Кнопка отмены заказа */}
                   {order.status === "Новый" && (
@@ -89,7 +97,7 @@ const OrderProcessingPage = () => {
                   {/* Кнопка завершения заказа */}
                   {order.status === "Оплачен" && (
                     <button
-                      className="text-yellow-500"
+                      className="text-green-500"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCompleteOrder(order.id);
