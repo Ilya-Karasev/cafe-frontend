@@ -6,6 +6,8 @@ import { Link } from "react-router-dom";
 import logo from "../assets/logo512.jpg";
 
 const Navbar = () => {
+  const isAuthenticated = localStorage.getItem("currentUser") !== null;
+
   return (
     <main className="flex flex-col w-full bg-gray-50">
       {/* Верхняя часть навбара */}
@@ -43,8 +45,8 @@ const Navbar = () => {
             </button>
           </Link>
 
-          {/* Кнопка входа в аккаунт с ссылкой на страницу пользователя */}
-          <Link to="/sign-in">
+          {/* Кнопка входа в аккаунт / переход в профиль */}
+          <Link to={isAuthenticated ? "/user-account" : "/sign-in"}>
             <button className="bg-[rgb(36,34,39)] text-[rgb(255,204,1)] rounded-md flex items-center justify-center h-16 w-16 text-4xl hover:opacity-80">
               <BsPersonCircle />
             </button>

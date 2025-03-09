@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BsPersonCircle } from "react-icons/bs";
 import { FaSearch, FaShoppingBasket } from "react-icons/fa";
 import { Link } from "react-router-dom";
@@ -7,6 +7,12 @@ import logo from "../assets/logo512.jpg";
 const NavbarMenu = ({ onCategorySelect, onSearch, onLogoClick }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const userData = localStorage.getItem("currentUser");
+    setIsLoggedIn(!!userData); // true, если данные пользователя есть
+  }, []);
 
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
@@ -49,7 +55,7 @@ const NavbarMenu = ({ onCategorySelect, onSearch, onLogoClick }) => {
               <FaShoppingBasket />
             </button>
           </Link>
-          <Link to="/sign-in">
+          <Link to={isLoggedIn ? "/user-account" : "/sign-in"}>
             <button className="bg-[rgb(36,34,39)] text-[rgb(255,204,1)] rounded-md flex items-center justify-center h-16 w-16 text-4xl hover:opacity-80">
               <BsPersonCircle />
             </button>
@@ -58,66 +64,17 @@ const NavbarMenu = ({ onCategorySelect, onSearch, onLogoClick }) => {
       </div>
       <div className="bg-[rgb(255,204,1)] text-[rgb(36,34,39)] w-full">
         <ul className="flex flex-wrap justify-around list-none p-0 m-0">
-          <li
-            onClick={() => handleCategoryClick(1)}
-            className={`cursor-pointer py-4 px-2 border-2 border-[rgb(36,34,39)] text-center flex-grow hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] ${
-              selectedCategory === 1
-                ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                : ""
-            }`}
-          >
-            <strong>Основные блюда</strong>
-          </li>
-          <li
-            onClick={() => handleCategoryClick(2)}
-            className={`cursor-pointer py-4 px-2 border-2 border-[rgb(36,34,39)] text-center flex-grow hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] ${
-              selectedCategory === 2
-                ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                : ""
-            }`}
-          >
-            <strong>Закуски</strong>
-          </li>
-          <li
-            onClick={() => handleCategoryClick(3)}
-            className={`cursor-pointer py-4 px-2 border-2 border-[rgb(36,34,39)] text-center flex-grow hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] ${
-              selectedCategory === 3
-                ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                : ""
-            }`}
-          >
-            <strong>Супы</strong>
-          </li>
-          <li
-            onClick={() => handleCategoryClick(4)}
-            className={`cursor-pointer py-4 px-2 border-2 border-[rgb(36,34,39)] text-center flex-grow hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] ${
-              selectedCategory === 4
-                ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                : ""
-            }`}
-          >
-            <strong>Салаты</strong>
-          </li>
-          <li
-            onClick={() => handleCategoryClick(5)}
-            className={`cursor-pointer py-4 px-2 border-2 border-[rgb(36,34,39)] text-center flex-grow hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] ${
-              selectedCategory === 5
-                ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                : ""
-            }`}
-          >
-            <strong>Десерты</strong>
-          </li>
-          <li
-            onClick={() => handleCategoryClick(6)}
-            className={`cursor-pointer py-4 px-2 border-2 border-[rgb(36,34,39)] text-center flex-grow hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] ${
-              selectedCategory === 6
-                ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                : ""
-            }`}
-          >
-            <strong>Напитки</strong>
-          </li>
+          {[{ id: 1, name: "Основные блюда" }, { id: 2, name: "Закуски" }, { id: 3, name: "Супы" }, { id: 4, name: "Салаты" }, { id: 5, name: "Десерты" }, { id: 6, name: "Напитки" }].map((cat) => (
+            <li
+              key={cat.id}
+              onClick={() => handleCategoryClick(cat.id)}
+              className={`cursor-pointer py-4 px-2 border-2 border-[rgb(36,34,39)] text-center flex-grow hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] ${
+                selectedCategory === cat.id ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]" : ""
+              }`}
+            >
+              <strong>{cat.name}</strong>
+            </li>
+          ))}
         </ul>
       </div>
     </main>

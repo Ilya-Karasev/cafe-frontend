@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
@@ -10,35 +10,46 @@ const SignInPage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // Загрузка сохраненных данных при монтировании
+  useEffect(() => {
+    const savedUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (savedUser) {
+      setEmail(savedUser.email || "");
+      setPassword(savedUser.password || "");
+    }
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(""); // Сброс ошибки перед запросом
-  
+
     try {
       const response = await fetch("https://caffe-production.up.railway.app/api/User/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
+        body: JSON.stringify({ email, password }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Неверный логин или пароль");
       }
-  
+
       const userData = await response.json();
-  
-      localStorage.setItem("currentUser", JSON.stringify(userData));
+
+      // Сохраняем данные в localStorage
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify({ email, password, ...userData })
+      );
+
       navigate("/user-account");
     } catch (error) {
       setError("Ошибка входа. Проверьте логин и пароль.");
       console.error("Ошибка входа:", error);
     }
-  };  
+  };
 
   return (
     <div className="flex flex-col min-h-screen overflow-y-auto website-background bg-black bg-opacity-30">
@@ -51,10 +62,7 @@ const SignInPage = () => {
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           <form onSubmit={handleLogin}>
             <div className="mb-4">
-              <label
-                className="block text-[rgb(255,204,1)] font-bold mb-2"
-                htmlFor="username"
-              >
+              <label className="block text-[rgb(255,204,1)] font-bold mb-2" htmlFor="email">
                 Логин
               </label>
               <input
@@ -67,10 +75,7 @@ const SignInPage = () => {
               />
             </div>
             <div className="mb-2">
-              <label
-                className="block text-[rgb(255,204,1)] font-bold mb-2"
-                htmlFor="password"
-              >
+              <label className="block text-[rgb(255,204,1)] font-bold mb-2" htmlFor="password">
                 Пароль
               </label>
               <input
@@ -83,10 +88,7 @@ const SignInPage = () => {
               />
             </div>
             <div className="mb-4 text-center">
-              <button
-                type="button"
-                className="text-[rgb(255,204,1)] hover:underline"
-              >
+              <button type="button" className="text-[rgb(255,204,1)] hover:underline">
                 Забыли логин / пароль?
               </button>
             </div>
@@ -107,26 +109,3 @@ const SignInPage = () => {
 };
 
 export default SignInPage;
-
-const users = [
-  {
-    username: "admin",
-    password: "admin",
-    role: "ADMIN",
-    name: "Петров Иванов",
-    phone: "+7 (111) 123-45-67",
-    email: "admin@example.com",
-    profilePicture:
-      "https://cdn.icon-icons.com/icons2/1130/PNG/512/maleuserincircularbutton_80201.png",
-  },
-  {
-    username: "user",
-    password: "user",
-    role: "USER",
-    name: "Иванов Петров",
-    phone: "+7 (999) 987-65-43",
-    email: "user@example.com",
-    profilePicture:
-      "https://cdn.icon-icons.com/icons2/1130/PNG/512/maleuserincircularbutton_80201.png",
-  },
-];

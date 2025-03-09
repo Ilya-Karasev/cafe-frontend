@@ -1,11 +1,17 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
 
 const UserAccountPage = () => {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  const handleLogout = () => {
+    localStorage.removeItem("currentUser"); // Очистка localStorage
+    navigate("/"); // Перенаправление на главную страницу
+  };
 
   return (
     <div className="flex flex-col min-h-screen overflow-y-auto website-background bg-black bg-opacity-30">
@@ -23,12 +29,12 @@ const UserAccountPage = () => {
           >
             Редактировать профиль
           </Link>
-          <Link
-            to="/"
+          <button
+            onClick={handleLogout}
             className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded mb-2 hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors duration-300 text-center"
           >
             Выйти из аккаунта
-          </Link>
+          </button>
         </div>
         <div className="w-3/4 p-4 flex flex-col items-center justify-center">
           <div className="bg-black bg-opacity-50 p-6 rounded-lg shadow-lg mb-4 w-full max-w-md">
