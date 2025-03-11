@@ -2,11 +2,20 @@ import React from "react";
 import { BsPersonCircle } from "react-icons/bs";
 import { FaSearch, FaShoppingBasket } from "react-icons/fa";
 import { GiKnifeFork } from "react-icons/gi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo512.jpg";
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem("currentUser") !== null;
+
+  const handleCartClick = () => {
+    if (isAuthenticated) {
+      navigate("/cart");
+    } else {
+      alert("Для доступа к корзине необходимо войти в аккаунт.");
+    }
+  };
 
   return (
     <main className="flex flex-col w-full bg-gray-50">
@@ -38,12 +47,13 @@ const Navbar = () => {
             </button>
           </Link>
 
-          {/* Кнопка корзины с ссылкой на страницу корзины */}
-          <Link to="/cart">
-            <button className="bg-[rgb(36,34,39)] text-[rgb(255,204,1)] rounded-md flex items-center justify-center h-16 w-16 text-4xl hover:opacity-80 mr-10">
-              <FaShoppingBasket />
-            </button>
-          </Link>
+          {/* Кнопка корзины с проверкой авторизации */}
+          <button
+            onClick={handleCartClick}
+            className="bg-[rgb(36,34,39)] text-[rgb(255,204,1)] rounded-md flex items-center justify-center h-16 w-16 text-4xl hover:opacity-80 mr-10"
+          >
+            <FaShoppingBasket />
+          </button>
 
           {/* Кнопка входа в аккаунт / переход в профиль */}
           <Link to={isAuthenticated ? "/user-account" : "/sign-in"}>

@@ -1,44 +1,72 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import Footer from "../components/Footer";
 import MenuItem from "../components/MenuItem";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
 
+const url = "https://caffe-production.up.railway.app";
+
 const CartPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [hoveredOrderId, setHoveredOrderId] = useState(null);
   const [orderHistoryHoveredId, setOrderHistoryHoveredId] = useState(null);
-  const [ordersData, setOrdersData] = useState([
-    {
-      id: 1,
-      items: [
-        {
-          id: 1,
-          name: "Суп",
-          price: 150,
-          image:
-            "https://i.pinimg.com/736x/f6/79/b2/f679b2fdeb3786b5ed3516424fdc3d17.jpg",
-        },
-        { id: 2, name: "Салат", price: 200, image: "url/to/image2.jpg" },
-        { id: 3, name: "Суп", price: 150, image: "url/to/image1.jpg" },
-        { id: 4, name: "Салат", price: 200, image: "url/to/image2.jpg" },
-        { id: 5, name: "Суп", price: 150, image: "url/to/image1.jpg" },
-        { id: 6, name: "Салат", price: 200, image: "url/to/image2.jpg" },
-        { id: 7, name: "Суп", price: 150, image: "url/to/image1.jpg" },
-        { id: 8, name: "Салат", price: 200, image: "url/to/image2.jpg" },
-      ],
-    },
-    {
-      id: 2,
-      items: [
-        { id: 3, name: "Пирожное", price: 100, image: "url/to/image3.jpg" },
-        { id: 4, name: "Кофе", price: 120, image: "url/to/image4.jpg" },
-      ],
-    },
-  ]);
-
+  const [ordersData, setOrdersData] = useState([]);
   const [orderHistory, setOrderHistory] = useState([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        // Получаем текущего пользователя
+        const userData = localStorage.getItem("currentUser");
+        if (!userData) return;
+
+        const user = JSON.parse(userData);
+        let orders = [];
+        let history = [];
+
+        // Загружаем текущий заказ (корзину)
+        if (user.cartId) {
+          const cartResponse = await fetch(`${url}/api/Cart/${user.cartId}`);
+          if (cartResponse.ok) {
+            const cartData = await cartResponse.json();
+            orders.push({
+              id: cartData.id,
+              items: cartData.items || [],
+              status: "В процессе",
+            });
+          }
+        }
+
+        // Загружаем историю заказов
+        if (user.orderIds && Array.isArray(user.orderIds)) {
+          const orderPromises = user.orderIds.map(async (orderId) => {
+            const orderResponse = await fetch(`${url}/api/Order/${orderId}`);
+            if (orderResponse.ok) {
+              const orderData = await orderResponse.json();
+              return {
+                id: orderData.id,
+                items: orderData.items || [],
+                status: "Завершен",
+              };
+            }
+            return null;
+          });
+
+          // Ждём выполнения всех запросов
+          history = (await Promise.all(orderPromises)).filter((order) => order !== null);
+        }
+
+        // Обновляем состояния
+        setOrdersData(orders);
+        setOrderHistory(history);
+      } catch (error) {
+        console.error("Ошибка загрузки заказов:", error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   const handleDeleteOrder = (orderId) => {
     const orderToDelete = ordersData.find((order) => order.id === orderId);
@@ -116,7 +144,6 @@ const CartPage = () => {
             </ul>
           </div>
         </div>
-
 
         {/* Список товаров из выбранного заказа справа */}
         <div className="w-2/3 p-4">

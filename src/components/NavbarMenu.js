@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { BsPersonCircle } from "react-icons/bs";
 import { FaSearch, FaShoppingBasket } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo512.jpg";
 
 const NavbarMenu = ({ onCategorySelect, onSearch, onLogoClick }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const userData = localStorage.getItem("currentUser");
@@ -31,6 +32,14 @@ const NavbarMenu = ({ onCategorySelect, onSearch, onLogoClick }) => {
     onLogoClick();
   };
 
+  const handleCartClick = () => {
+    if (isLoggedIn) {
+      navigate("/cart");
+    } else {
+      alert("Пожалуйста, авторизуйтесь, чтобы перейти в корзину.");
+    }
+  };
+
   return (
     <main className="flex flex-col w-full bg-gray-50">
       <div className="flex justify-between items-center bg-[rgb(36,34,39)] p-4 w-full mb-0">
@@ -50,11 +59,12 @@ const NavbarMenu = ({ onCategorySelect, onSearch, onLogoClick }) => {
           />
         </div>
         <div className="flex items-center">
-          <Link to="/cart">
-            <button className="bg-[rgb(36,34,39)] text-[rgb(255,204,1)] rounded-md flex items-center justify-center h-16 w-16 text-4xl hover:opacity-80 mr-10">
-              <FaShoppingBasket />
-            </button>
-          </Link>
+          <button
+            onClick={handleCartClick}
+            className="bg-[rgb(36,34,39)] text-[rgb(255,204,1)] rounded-md flex items-center justify-center h-16 w-16 text-4xl hover:opacity-80 mr-10"
+          >
+            <FaShoppingBasket />
+          </button>
           <Link to={isLoggedIn ? "/user-account" : "/sign-in"}>
             <button className="bg-[rgb(36,34,39)] text-[rgb(255,204,1)] rounded-md flex items-center justify-center h-16 w-16 text-4xl hover:opacity-80">
               <BsPersonCircle />
