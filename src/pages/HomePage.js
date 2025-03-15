@@ -5,11 +5,14 @@ import NavbarMenu from "../components/NavbarMenu";
 import { fetchMenuItems } from "../services/menuService";
 import "../style/WebsiteBackground.css";
 
+const url = "https://caffe-production.up.railway.app";
+
 const HomePage = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
 
   useEffect(() => {
     const loadMenuItems = async () => {
@@ -24,6 +27,21 @@ const HomePage = () => {
       }
     };
     loadMenuItems();
+  }, []);
+
+  useEffect(() => {
+    // Получаем данные о текущем пользователе из localStorage
+    const userData = localStorage.getItem("currentUser");
+    if (userData) {
+      const user = JSON.parse(userData);
+      // Запросим корзину текущего пользователя по cartId
+      fetch(`${url}/api/Cart/user/${user.id}`)
+        .then(response => response.json())
+        .then(data => {
+          setCartItems(data.items); // Сохраняем массив товаров из корзины
+        })
+        .catch(error => console.error("Error fetching cart data:", error));
+    }
   }, []);
 
   const handleCategorySelect = (category) => {
@@ -51,6 +69,19 @@ const HomePage = () => {
     setFilteredMenuItems(menuItems);
   };
 
+  const updateCart = (itemId, quantity) => {
+    setCartItems((prevItems) => {
+      const existingItemIndex = prevItems.findIndex((item) => item.id === itemId);
+      if (existingItemIndex !== -1) {
+        const updatedItems = [...prevItems];
+        updatedItems[existingItemIndex] = { ...updatedItems[existingItemIndex], quantity };
+        return updatedItems;
+      } else {
+        return [...prevItems, { id: itemId, quantity }];
+      }
+    });
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <NavbarMenu
@@ -59,7 +90,6 @@ const HomePage = () => {
         onLogoClick={handleLogoClick}
       />
       <div className="flex-grow relative website-background bg-black bg-opacity-30">
-        <div className="absolute inset-0 font-bold website-background-overlay"></div>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center flex-col">
             <div className="animate-spin rounded-full border-t-4 border-[rgb(255,204,1)] w-16 h-16 mb-4"></div>
@@ -70,7 +100,12 @@ const HomePage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 justify-items-center">
           {filteredMenuItems.length > 0 &&
             filteredMenuItems.map((item) => (
-              <MenuItem key={item.id} item={item} />
+              <MenuItem
+                key={item.id}
+                item={item}
+                cartItems={cartItems}
+                updateCart={updateCart} // Передаем функцию обновления корзины
+              />
             ))}
         </div>
       </div>

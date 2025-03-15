@@ -14,71 +14,80 @@ const CartPage = () => {
   const [ordersData, setOrdersData] = useState([]);
   const [orderHistory, setOrderHistory] = useState([]);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        // Получаем текущего пользователя
-        const userData = localStorage.getItem("currentUser");
-        if (!userData) return;
-
-        const user = JSON.parse(userData);
-        let orders = [];
-        let history = [];
-
-        // Загружаем текущий заказ (корзину)
-        if (user.cartId) {
-          const cartResponse = await fetch(`${url}/api/Cart/${user.cartId}`);
-          if (cartResponse.ok) {
-            const cartData = await cartResponse.json();
-            orders.push({
-              id: cartData.id,
-              items: cartData.items || [],
-              status: "В процессе",
-            });
+    // Функция обновления количества товара в корзине
+    const updateItemQuantity = (itemId, newQuantity) => {
+      setOrdersData((prevOrders) => {
+        return prevOrders.map((order) => {
+          if (order.id === selectedOrder.id) {
+            const updatedItems = order.items
+              .map((item) => (item.id === itemId ? { ...item, quantity: newQuantity } : item))
+              .filter((item) => item.quantity > 0); // Удаляем товар, если его количество стало 0
+    
+            return { ...order, items: updatedItems };
           }
-        }
+          return order;
+        });
+      });
+    };    
 
-        // Загружаем историю заказов
-        if (user.orderIds && Array.isArray(user.orderIds)) {
-          const orderPromises = user.orderIds.map(async (orderId) => {
-            const orderResponse = await fetch(`${url}/api/Order/${orderId}`);
-            if (orderResponse.ok) {
-              const orderData = await orderResponse.json();
-              return {
-                id: orderData.id,
-                items: orderData.items || [],
-                status: "Завершен",
-              };
+    useEffect(() => {
+      const fetchOrders = async () => {
+        try {
+          const userData = localStorage.getItem("currentUser");
+          if (!userData) return;
+  
+          const user = JSON.parse(userData);
+          let orders = [];
+          let history = [];
+  
+          if (user.cartId) {
+            const cartResponse = await fetch(`${url}/api/Cart/${user.cartId}`);
+            if (cartResponse.ok) {
+              const cartData = await cartResponse.json();
+              orders.push({
+                id: cartData.id,
+                items: cartData.items || [],
+                status: "В процессе",
+              });
             }
-            return null;
-          });
-
-          // Ждём выполнения всех запросов
-          history = (await Promise.all(orderPromises)).filter((order) => order !== null);
+          }
+  
+          if (user.orderIds && Array.isArray(user.orderIds)) {
+            const orderPromises = user.orderIds.map(async (orderId) => {
+              const orderResponse = await fetch(`${url}/api/Order/${orderId}`);
+              if (orderResponse.ok) {
+                const orderData = await orderResponse.json();
+                return {
+                  id: orderData.id,
+                  items: orderData.items || [],
+                  status: "Завершен",
+                };
+              }
+              return null;
+            });
+            history = (await Promise.all(orderPromises)).filter((order) => order !== null);
+          }
+  
+          setOrdersData(orders);
+          setOrderHistory(history);
+        } catch (error) {
+          console.error("Ошибка загрузки заказов:", error);
         }
-
-        // Обновляем состояния
-        setOrdersData(orders);
-        setOrderHistory(history);
-      } catch (error) {
-        console.error("Ошибка загрузки заказов:", error);
-      }
+      };
+  
+      fetchOrders();
+    }, []);
+  
+    const handleDeleteOrder = (orderId) => {
+      const orderToDelete = ordersData.find((order) => order.id === orderId);
+      setOrdersData(ordersData.filter((order) => order.id !== orderId));
+      setOrderHistory([...orderHistory, { ...orderToDelete, status: "Удален" }]);
     };
-
-    fetchOrders();
-  }, []);
-
-  const handleDeleteOrder = (orderId) => {
-    const orderToDelete = ordersData.find((order) => order.id === orderId);
-    setOrdersData(ordersData.filter((order) => order.id !== orderId));
-    setOrderHistory([...orderHistory, { ...orderToDelete, status: "Удален" }]);
-  };
 
   return (
     <main className="flex flex-col min-h-screen overflow-y-auto website-background bg-black bg-opacity-30">
       <Navbar />
       <div className="flex flex-grow">
-        {/* Список заказов слева */}
         <div className="w-1/4 p-4 border-r border-black bg-yellow-400">
           <h2 className="text-2xl mb-4 font-bold text-center text-[rgb(36,34,39)]">
             Мои Заказы
@@ -88,11 +97,9 @@ const CartPage = () => {
               <li
                 key={order.id}
                 className={`cursor-pointer py-2 px-4 border-b font-bold border-[rgb(36,34,39)] 
-                  ${
-                    hoveredOrderId === order.id
-                      ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                      : "hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)]"
-                  } 
+                  ${hoveredOrderId === order.id
+                    ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
+                    : "hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)]"} 
                   flex justify-between items-center`}
                 onMouseEnter={() => setHoveredOrderId(order.id)}
                 onMouseLeave={() => setHoveredOrderId(null)}
@@ -100,11 +107,7 @@ const CartPage = () => {
               >
                 <span>Заказ #{order.id}</span>
                 <button
-                  className={`ml-4 ${
-                    hoveredOrderId === order.id
-                      ? "text-[rgb(255,204,1)]"
-                      : "text-[rgb(36,34,39)]"
-                  }`}
+                  className={`ml-4 ${hoveredOrderId === order.id ? "text-[rgb(255,204,1)]" : "text-[rgb(36,34,39)]"}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteOrder(order.id);
@@ -154,7 +157,7 @@ const CartPage = () => {
               </h2>
               <div className="flex flex-wrap">
                 {selectedOrder.items.map((item) => (
-                  <MenuItem key={item.id} item={item} />
+                  <MenuItem key={item.id} item={item} updateQuantity={updateItemQuantity} />
                 ))}
               </div>
             </div>
