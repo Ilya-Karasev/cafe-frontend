@@ -1,109 +1,87 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AdminMenuItem from "../components/AdminMenuItem";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
+import { fetchMenuItems, addMenuItem, updateMenuItem, deleteMenuItem } from "../services/adminService";
 import "../style/WebsiteBackground.css";
 
 const AdminPanelPage = () => {
-  const [categories, setCategories] = useState([
-    "Первые блюда",
-    "Горячее и закуски",
-    "Салаты",
-    "Десерты и выпечка",
-    "Напитки",
-  ]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [filteredMenuItems, setFilteredMenuItems] = useState([]);
+  const [newDish, setNewDish] = useState({
+    title: "",
+    description: "",
+    imageUrl: "",
+    price: "",
+    category: 1,
+    isAvailable: false,
+  });
+  const [editItem, setEditItem] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
-  const [newCategory, setNewCategory] = useState("");
-  const [menuItems, setMenuItems] = useState([
-    {
-      id: 1,
-      name: "Шоколадный маффин",
-      image:
-        "https://i.pinimg.com/originals/44/93/72/449372bc56931eea21dc63929649695e.jpg",
-      price: 69,
-      visible: true,
-    },
-    {
-      id: 2,
-      name: "Шоколадный маффин",
-      image:
-        "https://i.pinimg.com/originals/44/93/72/449372bc56931eea21dc63929649695e.jpg",
-      price: 65,
-      visible: false,
-    },
-    {
-      id: 3,
-      name: "Шоколадный маффин",
-      image:
-        "https://i.pinimg.com/originals/44/93/72/449372bc56931eea21dc63929649695e.jpg",
-      price: 75,
-      visible: true,
-    },
-    {
-      id: 4,
-      name: "Шоколадный маффин",
-      image:
-        "https://i.pinimg.com/originals/44/93/72/449372bc56931eea21dc63929649695e.jpg",
-      price: 75,
-      visible: true,
-    },
-    {
-      id: 5,
-      name: "Шоколадный маффин",
-      image:
-        "https://i.pinimg.com/originals/44/93/72/449372bc56931eea21dc63929649695e.jpg",
-      price: 75,
-      visible: true,
-    },
-  ]);
+  useEffect(() => {
+    const loadMenuItems = async () => {
+      try {
+        const data = await fetchMenuItems();
+        setMenuItems(data);
+        setFilteredMenuItems(data);
+      } catch (error) {
+        console.error("Failed to load menu items:", error);
+      }
+    };
+    loadMenuItems();
+  }, []);
 
-  const [newDish, setNewDish] = useState({ name: "", image: "", price: "" });
-  const [changesSaved, setChangesSaved] = useState(false);
-
-  const handleAddCategory = () => {
-    if (newCategory.trim() && !categories.includes(newCategory)) {
-      setCategories([...categories, newCategory.trim()]);
-      setNewCategory("");
+  const handleSave = async (item, isNew = false) => {
+    try {
+      const savedItem = isNew ? await addMenuItem(item) : await updateMenuItem(item);
+      setMenuItems((prev) =>
+        isNew ? [...prev, savedItem] : prev.map((i) => (i.id === savedItem.id ? savedItem : i))
+      );
+      setFilteredMenuItems((prev) =>
+        isNew ? [...prev, savedItem] : prev.map((i) => (i.id === savedItem.id ? savedItem : i))
+      );
+      if (isNew) setNewDish({ title: "", description: "", imageUrl: "", price: "", category: 1, isAvailable: false });
+      else setEditItem(null);
+    } catch (error) {
+      console.error(`Error ${isNew ? "adding" : "updating"} dish:`, error);
     }
   };
 
-  const handleDeleteCategory = (category) => {
-    setCategories(categories.filter((cat) => cat !== category));
-  };
-
-  const handleAddDish = () => {
-    if (newDish.name && newDish.image && newDish.price) {
-      setMenuItems([
-        ...menuItems,
-        { ...newDish, id: Date.now(), visible: true },
-      ]);
-      setNewDish({ name: "", image: "", price: "" });
+  const handleToggleAvailability = async (item, isAvailable) => {
+    try {
+      const updatedItem = await updateMenuItem({ ...item, isAvailable });
+      setMenuItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+      setFilteredMenuItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+    } catch (error) {
+      console.error(`Error ${isAvailable ? "restoring" : "hiding"} dish:`, error);
     }
   };
 
-  const handleDeleteDish = (id) => {
-    setMenuItems(
-      menuItems.map((item) =>
-        item.id === id ? { ...item, visible: false } : item
-      )
-    );
+  const handleDelete = async (confirm) => {
+    if (confirm && itemToDelete) {
+      try {
+        await deleteMenuItem(itemToDelete);
+        setMenuItems((prev) => prev.filter((item) => item.id !== itemToDelete));
+        setFilteredMenuItems((prev) => prev.filter((item) => item.id !== itemToDelete));
+      } catch (error) {
+        console.error("Error deleting dish:", error);
+      }
+    }
+    setShowConfirmation(false);
+    setItemToDelete(null);
   };
 
-  const handleRestoreDish = (id) => {
-    setMenuItems(
-      menuItems.map((item) =>
-        item.id === id ? { ...item, visible: true } : item
-      )
-    );
+  const handleCategoryFilter = (category) => {
+    setSelectedCategory(category);
+    setFilteredMenuItems(category === null ? menuItems : menuItems.filter((item) => item.category === category));
   };
 
-  const handleRemoveDish = (id) => {
-    setMenuItems(menuItems.filter((item) => item.id !== id)); // Удаляем блюдо из меню
-  };
-
-  const handleSaveChanges = () => {
-    setChangesSaved(true);
-    setTimeout(() => setChangesSaved(false), 2000);
+  const handleInputChange = (field) => (e) => {
+    const value = e.target.value;
+    editItem ? setEditItem((prev) => ({ ...prev, [field]: value })) : setNewDish((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -111,126 +89,117 @@ const AdminPanelPage = () => {
       <Navbar />
       <div className="flex flex-grow">
         <div className="w-1/4 bg-[rgb(50,48,52)] text-[rgb(255,204,1)] p-4">
-          <h2 className="text-xl font-bold mb-4 text-center">Категории еды</h2>
-          <ul className="space-y-2">
-            {categories.map((category, index) => (
-              <li
-                key={index}
-                className="flex items-center justify-between bg-[rgb(255,204,1)] text-[rgb(36,34,39)] py-2 px-4 rounded hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] cursor-pointer"
-              >
-                <span>{category}</span>
-                <button
-                  className="text-red-500 hover:text-red-700"
-                  onClick={() => handleDeleteCategory(category)}
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6 flex gap-1">
-            {" "}
-            {/* уменьшен gap между элементами */}
-            <input
-              type="text"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              placeholder="Новая категория"
-              className="flex-grow p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
-            />
-            <button
-              className="bg-[rgb(255,204,1)] text-[rgb(36,34,39)] py-2 px-4 rounded hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] transition-colors duration-300"
-              onClick={handleAddCategory}
-            >
-              Добавить
-            </button>
-          </div>
-          <button
-            className="mt-10 w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors duration-300"
-            onClick={handleSaveChanges}
-          >
-            Сохранить изменения
-          </button>
-          {changesSaved && (
-            <div className="mt-4 text-green-400 font-bold">
-              Изменения сохранены!
-            </div>
-          )}
-        </div>
-
-        <div className="w-3/4 p-6">
-          <h2 className="text-center text-2xl font-bold text-[rgb(255,204,1)] mb-6">
-            Меню управления
+          <h2 className="text-xl font-bold mb-4 text-center">
+            {editItem ? "Редактировать блюдо" : "Добавить блюдо"}
           </h2>
-          <div className="flex gap-1 mb-4">
-            {" "}
-            {/* уменьшен gap между полями */}
+          <div className="flex flex-col gap-2">
             <input
               type="text"
               placeholder="Название блюда"
-              value={newDish.name}
-              onChange={(e) => setNewDish({ ...newDish, name: e.target.value })}
-              className="p-2 flex-grow border rounded"
+              value={editItem ? editItem.title : newDish.title}
+              onChange={handleInputChange("title")}
+              className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
+            />
+            <textarea
+              placeholder="Описание"
+              value={editItem ? editItem.description : newDish.description}
+              onChange={handleInputChange("description")}
+              className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             />
             <input
               type="text"
               placeholder="URL картинки"
-              value={newDish.image}
-              onChange={(e) =>
-                setNewDish({ ...newDish, image: e.target.value })
-              }
-              className="p-2 flex-grow border rounded"
+              value={editItem ? editItem.imageUrl : newDish.imageUrl}
+              onChange={handleInputChange("imageUrl")}
+              className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             />
             <input
               type="number"
               placeholder="Цена"
-              value={newDish.price}
-              onChange={(e) =>
-                setNewDish({ ...newDish, price: e.target.value })
-              }
-              className="p-2 flex-grow border rounded"
+              value={editItem ? editItem.price : newDish.price}
+              onChange={handleInputChange("price")}
+              className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             />
-            <button
-              className="bg-[rgb(255,204,1)] text-[rgb(36,34,39)] py-2 px-4 rounded hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)]"
-              onClick={handleAddDish}
+            <select
+              value={editItem ? editItem.category : newDish.category}
+              onChange={(e) => handleInputChange("category")(e)}
+              className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             >
-              Добавить блюдо
+              <option value={1}>Основные блюда</option>
+              <option value={2}>Закуски</option>
+              <option value={3}>Супы</option>
+              <option value={4}>Салаты</option>
+              <option value={5}>Десерты</option>
+              <option value={6}>Напитки</option>
+            </select>
+            <button
+              className="bg-[rgb(255,204,1)] text-[rgb(50,48,52)] py-2 px-4 rounded hover:bg-[rgb(50,48,52)] hover:text-[rgb(255,204,1)] transition-colors duration-300"
+              onClick={() => handleSave(editItem || newDish, !editItem)}
+            >
+              {editItem ? "Сохранить изменения" : "Добавить блюдо"}
             </button>
+            {editItem && (
+              <button
+                className="mt-2 bg-[rgb(50,48,52)] text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(50,48,52)]"
+                onClick={() => setEditItem(null)}
+              >
+                Отмена
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="w-3/4 p-6">
+          <h2 className="text-center text-2xl font-bold text-[rgb(36,34,39)] mb-6">
+            Меню управления
+          </h2>
+          <div className="font-bold flex justify-center gap-2 mb-4">
+            {[null, 1, 2, 3, 4, 5, 6].map((category) => (
+              <button
+                key={category}
+                className={`py-2 px-4 rounded ${selectedCategory === category ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
+                onClick={() => handleCategoryFilter(category)}
+              >
+                {category === null ? "Все" : ["Основные блюда", "Закуски", "Супы", "Салаты", "Десерты", "Напитки"][category - 1]}
+              </button>
+            ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {menuItems.map((item) => (
-              <div
+            {filteredMenuItems.map((item) => (
+              <AdminMenuItem
                 key={item.id}
-                className={`relative ${!item.visible ? "opacity-50" : ""}`}
-              >
-                <AdminMenuItem item={item} />
-                <div className="flex mt-2 gap-6">
-                  {" "}
-                  {item.visible ? (
-                    <button
-                      className="text-xs text-red-500 bg-white py-1 px-2 rounded-full hover:bg-red-500 hover:text-white"
-                      onClick={() => handleDeleteDish(item.id)}
-                    >
-                      Убрать из меню
-                    </button>
-                  ) : (
-                    <button
-                      className="text-xs bg-green-500 text-white py-1 px-2 rounded-full hover:bg-green-700"
-                      onClick={() => handleRestoreDish(item.id)}
-                    >
-                      Восстановить
-                    </button>
-                  )}
+                item={item}
+                onHide={() => handleToggleAvailability(item, false)}
+                onRestore={() => handleToggleAvailability(item, true)}
+                onEdit={() => setEditItem(item)}
+                onDelete={() => {
+                  setItemToDelete(item.id);
+                  setShowConfirmation(true);
+                }}
+              />
+            ))}
+          </div>
+          {showConfirmation && (
+            <div className="fixed inset-0 flex items-center justify-center bg-[rgb(50,48,52)] bg-opacity-75">
+              <div className="bg-[rgb(50,48,52)] text-[rgb(255,204,1)] p-4 rounded shadow-md">
+                <p>Вы уверены, что хотите удалить этот объект?</p>
+                <div className="flex justify-end mt-4">
                   <button
-                    className="text-xs text-red-500 bg-white py-1 px-2 rounded-full hover:bg-red-500 hover:text-white"
-                    onClick={() => handleRemoveDish(item.id)} // Новый обработчик для удаления
+                    className="mr-2 bg-[rgb(50,48,52)] text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(50,48,52)]"
+                    onClick={() => handleDelete(true)}
                   >
-                    Удалить блюдо
+                    Да
+                  </button>
+                  <button
+                    className="bg-[rgb(50,48,52)] text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(50,48,52)]"
+                    onClick={() => handleDelete(false)}
+                  >
+                    Нет
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
       <Footer />

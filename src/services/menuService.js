@@ -8,7 +8,11 @@ export const fetchMenuItems = async (category = null) => {
     if (!response.ok) throw new Error("Network response was not ok");
 
     const data = await response.json();
-    return data.menuItems || data; // Проверка структуры данных
+    const menuItems = data.menuItems || data; // Проверка структуры данных
+
+    menuItems.sort((a, b) => a.title.localeCompare(b.title));
+
+    return menuItems;
   } catch (error) {
     console.error("Error fetching menu items:", error);
     throw error;
