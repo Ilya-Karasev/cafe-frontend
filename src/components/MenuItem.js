@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaImage, FaMinusCircle, FaPlusCircle } from "react-icons/fa";
+import { ImSpinner8 } from "react-icons/im"; // Иконка спиннера
 
 const url = "https://caffe-production.up.railway.app";
 
@@ -7,99 +8,92 @@ const MenuItem = ({ item, updateCart }) => {
   const [imgError, setImgError] = useState(false);
   const [quantity, setQuantity] = useState(0);
   const [cartItems, setCartItems] = useState([]);
-  
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false); // Добавлено состояние загрузки цены
+
   useEffect(() => {
-    // Получаем данные о текущем пользователе из localStorage
     const userData = localStorage.getItem("currentUser");
     if (userData) {
       const user = JSON.parse(userData);
-      // Запросим корзину текущего пользователя по cartId
       fetch(`${url}/api/Cart/user/${user.id}`)
         .then(response => response.json())
         .then(data => {
-          setCartItems(Array.isArray(data.items) ? data.items : []); // Проверяем, массив ли это
+          setCartItems(Array.isArray(data.items) ? data.items : []);
         })
         .catch(error => {
           console.error("Error fetching cart data:", error);
-          setCartItems([]); // Устанавливаем пустой массив при ошибке
+          setCartItems([]);
         });
     }
-  }, []);  
-  
+  }, []);
+
   useEffect(() => {
-    // Считаем количество товара в корзине
     if (cartItems.length > 0) {
       const itemInCart = cartItems.filter(cartItem => cartItem.id === item.id);
-      setQuantity(itemInCart.reduce((acc, curr) => acc + 1, 0)); // Суммируем количество товаров с одинаковым id
+      setQuantity(itemInCart.reduce((acc, curr) => acc + 1, 0));
     }
   }, [cartItems, item.id]);
 
   const increaseQuantity = () => {
-    setQuantity((prevQuantity) => prevQuantity + 1);
-    addToCart(); // Добавляем в корзину сразу после увеличения
+    setQuantity((prevQuantity) => {
+      const newQuantity = prevQuantity + 1;
+      setIsLoadingPrice(true); // Показываем спиннер перед обновлением цены
+      addToCart();
+      return newQuantity;
+    });
   };
 
   const decreaseQuantity = () => {
     if (quantity > 0) {
-      setQuantity((prevQuantity) => prevQuantity - 1);
-      removeFromCart(); // Вызываем функцию удаления из корзины
+      setQuantity((prevQuantity) => {
+        const newQuantity = prevQuantity - 1;
+        setIsLoadingPrice(true); // Показываем спиннер перед обновлением цены
+        removeFromCart();
+        return newQuantity;
+      });
     }
   };
-  
-  // Функция для отправки запроса на удаление блюда из корзины
+
+  useEffect(() => {
+    if (quantity > 0) {
+      setTimeout(() => {
+        setIsLoadingPrice(false); // Убираем спиннер после загрузки цены
+      }, 500); // Имитация задержки запроса
+    }
+  }, [quantity]);
+
+  const totalPrice = quantity * item.price;
+
   const removeFromCart = () => {
     const userData = localStorage.getItem("currentUser");
     if (userData) {
       const user = JSON.parse(userData);
-      const menuItemId = item.id;
-  
-      fetch(`${url}/api/Cart/user/${user.id}/remove-item/${menuItemId}`, {
+      fetch(`${url}/api/Cart/user/${user.id}/remove-item/${item.id}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       })
-        .then((response) => {
-          if (response.ok) {
-            updateCart(menuItemId, quantity - 1); // Обновляем состояние корзины в HomePage
-          } else {
-            console.error("Failed to remove item from cart");
-          }
+        .then(response => {
+          if (response.ok) updateCart(item.id, quantity - 1);
         })
-        .catch((error) => console.error("Error removing item from cart:", error));
+        .catch(error => console.error("Error removing item from cart:", error));
     }
-  };  
+  };
 
-  // Функция для отправки запроса на добавление блюда в корзину
   const addToCart = () => {
     const userData = localStorage.getItem("currentUser");
     if (userData) {
       const user = JSON.parse(userData);
-      const menuItemId = item.id;
-
       fetch(`${url}/api/Cart/user/${user.id}/add-item`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          menuItemId,
-          quantity: 1, // Мы добавляем 1 порцию каждого блюда
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuItemId: item.id, quantity: 1 }),
       })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            updateCart(menuItemId, quantity); // Обновляем состояние корзины в HomePage
-          } else {
-            console.error("Failed to add item to cart:", data);
-          }
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) updateCart(item.id, quantity);
         })
-        .catch((error) => console.error("Error adding item to cart:", error));
+        .catch(error => console.error("Error adding item to cart:", error));
     }
-  };  
-
-  const totalPrice = quantity * item.price;
+  };
 
   return (
     <div className="flex flex-col items-center justify-between p-4 m-2 border-2 border-white rounded-lg bg-white/80 shadow-md w-52 text-center">
@@ -118,8 +112,7 @@ const MenuItem = ({ item, updateCart }) => {
       <h3 className="text-lg text-black mb-2">{item.title}</h3>
       <div className="flex items-center justify-between w-full">
         <button
-          className="bg-black text-yellow-500 rounded-full w-8 h-8 flex items-center justify-center
-                     hover:bg-gray-800 active:bg-gray-900 transition-colors duration-150"
+          className="bg-black text-yellow-500 rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-800 active:bg-gray-900 transition-colors duration-150"
           onClick={decreaseQuantity}
         >
           <FaMinusCircle />
@@ -130,9 +123,8 @@ const MenuItem = ({ item, updateCart }) => {
         <span className="text-lg mx-2">{item.price} ₽</span>
 
         <button
-          className="bg-black text-yellow-500 rounded-full w-8 h-8 flex items-center justify-center
-                     hover:bg-gray-800 active:bg-gray-900 transition-colors duration-150"
-          onClick={increaseQuantity} // Здесь вызывается и увеличение, и добавление в корзину
+          className="bg-black text-yellow-500 rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-800 active:bg-gray-900 transition-colors duration-150"
+          onClick={increaseQuantity}
         >
           <FaPlusCircle />
         </button>
@@ -140,7 +132,11 @@ const MenuItem = ({ item, updateCart }) => {
 
       {quantity > 0 && (
         <div className="mt-2 text-sm text-black">
-          Общая стоимость: {totalPrice} ₽
+          {isLoadingPrice ? (
+            <ImSpinner8 className="animate-spin text-yellow-500 text-2xl" />
+          ) : (
+            <>Общая стоимость: {totalPrice} ₽</>
+          )}
         </div>
       )}
     </div>
