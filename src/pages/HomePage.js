@@ -18,8 +18,9 @@ const HomePage = () => {
     const loadMenuItems = async () => {
       try {
         const data = await fetchMenuItems();
-        setMenuItems(data);
-        setFilteredMenuItems(data);
+        const availableItems = data.filter(item => item.isAvailable);
+        setMenuItems(availableItems);
+        setFilteredMenuItems(availableItems);
       } catch (error) {
         setError("Failed to load menu items");
       } finally {
@@ -30,15 +31,13 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    // Получаем данные о текущем пользователе из localStorage
     const userData = localStorage.getItem("currentUser");
     if (userData) {
       const user = JSON.parse(userData);
-      // Запросим корзину текущего пользователя по cartId
       fetch(`${url}/api/Cart/user/${user.id}`)
         .then(response => response.json())
         .then(data => {
-          setCartItems(data.items); // Сохраняем массив товаров из корзины
+          setCartItems(data.items); 
         })
         .catch(error => console.error("Error fetching cart data:", error));
     }
@@ -104,7 +103,7 @@ const HomePage = () => {
                 key={item.id}
                 item={item}
                 cartItems={cartItems}
-                updateCart={updateCart} // Передаем функцию обновления корзины
+                updateCart={updateCart} 
               />
             ))}
         </div>
