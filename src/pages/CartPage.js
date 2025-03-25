@@ -13,7 +13,8 @@ const CartPage = () => {
   const [orderHistoryHoveredId, setOrderHistoryHoveredId] = useState(null);
   const [ordersData, setOrdersData] = useState([]);
   const [orderHistory, setOrderHistory] = useState([]);
-  const [loading, setLoading] = useState(true); // Состояние загрузки
+  const [loading, setLoading] = useState(true);
+  const [unavailableItems, setUnavailableItems] = useState([]);
 
   const updateItemQuantity = (itemId, newQuantity) => {
     setOrdersData((prevOrders) => {
@@ -21,7 +22,7 @@ const CartPage = () => {
         if (order.id === selectedOrder?.id) {
           const updatedItems = order.items
             .map((item) => (item.id === itemId ? { ...item, quantity: newQuantity } : item))
-            .filter((item) => item.quantity > 0); // Удаляем товар, если его количество стало 0
+            .filter((item) => item.quantity > 0);
 
           return { ...order, items: updatedItems };
         }
@@ -33,13 +34,14 @@ const CartPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        setLoading(true); // Начинаем загрузку
+        setLoading(true);
         const userData = localStorage.getItem("currentUser");
         if (!userData) return;
 
         const user = JSON.parse(userData);
         let orders = [];
         let history = [];
+        let unavailable = [];
 
         if (user.cartId) {
           const cartResponse = await fetch(`${url}/api/Cart/${user.cartId}`);
@@ -69,12 +71,19 @@ const CartPage = () => {
           history = (await Promise.all(orderPromises)).filter((order) => order !== null);
         }
 
+        const menuItemsResponse = await fetch(`${url}/api/MenuItems`);
+        if (menuItemsResponse.ok) {
+          const menuItemsData = await menuItemsResponse.json();
+          unavailable = menuItemsData.filter((item) => !item.isAvailable);
+        }
+
+        setUnavailableItems(unavailable);
         setOrdersData(orders);
         setOrderHistory(history);
       } catch (error) {
         console.error("Ошибка загрузки заказов:", error);
       } finally {
-        setLoading(false); // Завершаем загрузку
+        setLoading(false);
       }
     };
 
@@ -86,6 +95,19 @@ const CartPage = () => {
     setOrdersData(ordersData.filter((order) => order.id !== orderId));
     setOrderHistory([...orderHistory, { ...orderToDelete, status: "Удален" }]);
   };
+
+  useEffect(() => {
+    if (unavailableItems.length > 0 && ordersData.length > 0) {
+      setOrdersData((prevOrders) => {
+        return prevOrders.map((order) => {
+          const updatedItems = order.items.filter((item) =>
+            !unavailableItems.some((unavailableItem) => unavailableItem.id === item.id)
+          );
+          return { ...order, items: updatedItems };
+        });
+      });
+    }
+  }, [unavailableItems, ordersData]);
 
   return (
     <main className="flex flex-col min-h-screen overflow-y-auto website-background bg-black bg-opacity-30">
@@ -104,10 +126,10 @@ const CartPage = () => {
               {ordersData.map((order) => (
                 <li
                   key={order.id}
-                  className={`cursor-pointer py-2 px-4 border-b font-bold border-[rgb(36,34,39)] 
+                  className={`cursor-pointer py-2 px-4 border-b font-bold border-[rgb(36,34,39)]
                     ${hoveredOrderId === order.id
                       ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                      : "hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)]"} 
+                      : "hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)]"}
                     flex justify-between items-center`}
                   onMouseEnter={() => setHoveredOrderId(order.id)}
                   onMouseLeave={() => setHoveredOrderId(null)}

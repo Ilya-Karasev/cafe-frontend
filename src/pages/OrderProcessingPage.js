@@ -1,50 +1,76 @@
-import React, { useState } from "react";
-import { FaCheck, FaTimes } from "react-icons/fa"; // Галочка для выполнения заказа
+import React, { useState, useEffect } from "react";
+import { FaCheck, FaTimes } from "react-icons/fa";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
 
+const url = "https://caffe-production.up.railway.app/api/Order";
+
 const OrderProcessingPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [hoveredOrderId, setHoveredOrderId] = useState(null);
-  const [ordersData, setOrdersData] = useState([
-    {
-      id: 1,
-      status: "Новый",
-      items: Array(8).fill({
-        id: 1,
-        name: "Суп",
-        price: 150,
-        image:
-          "https://i.pinimg.com/736x/f6/79/b2/f679b2fdeb3786b5ed3516424fdc3d17.jpg",
-      }),
-    },
-    {
-      id: 2,
-      status: "Оплачен",
-      items: Array(8).fill({
-        id: 1,
-        name: "Суп",
-        price: 150,
-        image:
-          "https://i.pinimg.com/736x/f6/79/b2/f679b2fdeb3786b5ed3516424fdc3d17.jpg",
-      }),
-    },
-  ]);
+  const [ordersData, setOrdersData] = useState([]);
 
-  const handleCancelOrder = (orderId) => {
-    const updatedOrders = ordersData.map((order) =>
-      order.id === orderId ? { ...order, status: "Отменен" } : order
-    );
-    setOrdersData(updatedOrders);
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          setOrdersData(data);
+        } else {
+          console.error("Failed to fetch orders");
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const handleCancelOrder = async (orderId) => {
+    try {
+      const response = await fetch(`${url}/${orderId}/cancel`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.ok) {
+        setOrdersData((prevOrders) =>
+          prevOrders.map((order) =>
+            order.id === orderId ? { ...order, status: "Отменен" } : order
+          )
+        );
+      } else {
+        console.error("Failed to cancel order");
+      }
+    } catch (error) {
+      console.error("Error canceling order:", error);
+    }
   };
 
-  const handleCompleteOrder = (orderId) => {
-    const updatedOrders = ordersData.map((order) =>
-      order.id === orderId ? { ...order, status: "Завершен" } : order
-    );
-    setOrdersData(updatedOrders);
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      const response = await fetch(`${url}/${orderId}/complete`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.ok) {
+        setOrdersData((prevOrders) =>
+          prevOrders.map((order) =>
+            order.id === orderId ? { ...order, status: "Завершен" } : order
+          )
+        );
+      } else {
+        console.error("Failed to complete order");
+      }
+    } catch (error) {
+      console.error("Error completing order:", error);
+    }
   };
+
+  const paidOrders = ordersData.filter(order => order.status === "Оплачен");
+  const otherOrders = ordersData.filter(order => order.status !== "Оплачен");
 
   return (
     <main className="flex flex-col min-h-screen overflow-y-auto website-background bg-black bg-opacity-30">
@@ -56,15 +82,14 @@ const OrderProcessingPage = () => {
             Заказы на обработку
           </h2>
           <ul className="list-none p-0">
-            {ordersData.map((order) => (
+            {paidOrders.map((order) => (
               <li
                 key={order.id}
-                className={`cursor-pointer py-2 px-4 border-b font-bold border-[rgb(36,34,39)] 
-                  ${
-                    hoveredOrderId === order.id
-                      ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
-                      : "hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)]"
-                  } 
+                className={`cursor-pointer py-2 px-4 border-b font-bold border-[rgb(36,34,39)]
+                  ${hoveredOrderId === order.id
+                    ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
+                    : "hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)]"
+                  }
                   flex justify-between items-center`}
                 onMouseEnter={() => setHoveredOrderId(order.id)}
                 onMouseLeave={() => setHoveredOrderId(null)}
@@ -81,7 +106,6 @@ const OrderProcessingPage = () => {
                   ({order.status})
                 </span>
                 <div className="flex items-center space-x-2">
-                  {/* Кнопка отмены заказа */}
                   {order.status === "Новый" && (
                     <button
                       className="text-red-500"
@@ -94,7 +118,6 @@ const OrderProcessingPage = () => {
                     </button>
                   )}
 
-                  {/* Кнопка завершения заказа */}
                   {order.status === "Оплачен" && (
                     <button
                       className="text-green-500"
@@ -107,6 +130,31 @@ const OrderProcessingPage = () => {
                     </button>
                   )}
                 </div>
+              </li>
+            ))}
+            {otherOrders.map((order) => (
+              <li
+                key={order.id}
+                className={`cursor-pointer py-2 px-4 border-b font-bold border-[rgb(36,34,39)]
+                  ${hoveredOrderId === order.id
+                    ? "bg-[rgb(36,34,39)] text-[rgb(255,204,1)]"
+                    : "hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)]"
+                  }
+                  flex justify-between items-center`}
+                onMouseEnter={() => setHoveredOrderId(order.id)}
+                onMouseLeave={() => setHoveredOrderId(null)}
+                onClick={() => setSelectedOrder(order)}
+              >
+                <span>Заказ #{order.id}</span>
+                <span
+                  className={`ml-2 ${
+                    hoveredOrderId === order.id
+                      ? "text-[rgb(255,204,1)]"
+                      : "text-[rgb(36,34,39)]"
+                  }`}
+                >
+                  ({order.status})
+                </span>
               </li>
             ))}
           </ul>
@@ -123,21 +171,24 @@ const OrderProcessingPage = () => {
                 {selectedOrder.items.map((item, index) => (
                   <div
                     key={index}
-                    className="w-1/4 p-2" // Обновляем ширину элемента, чтобы было 4 в строке
+                    className="w-1/4 p-2"
                   >
                     <div className="bg-[rgb(36,34,39)] p-4 rounded-lg">
                       <img
-                        src={item.image}
-                        alt={item.name}
+                        src={item.imageUrl}
+                        alt={item.title}
                         className="w-full h-32 object-cover mb-4 rounded"
                       />
                       <h3 className="text-lg font-semibold text-[rgb(255,204,1)]">
-                        {item.name}
+                        {item.title}
                       </h3>
                       <p className="text-white">Цена: {item.price}₽</p>
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="text-xl font-bold text-center text-[rgb(36,34,39)]">
+                Общая стоимость: {selectedOrder.totalPrice}₽
               </div>
             </div>
           ) : (
