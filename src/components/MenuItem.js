@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { FaImage, FaMinusCircle, FaPlusCircle } from "react-icons/fa";
-import { ImSpinner8 } from "react-icons/im"; // Иконка спиннера
+import { ImSpinner8 } from "react-icons/im";
 
-const url = "https://caffe-production.up.railway.app";
+const url = "http://localhost:5253";
 
 const MenuItem = ({ item, updateCart }) => {
   const [imgError, setImgError] = useState(false);
   const [quantity, setQuantity] = useState(0);
   const [cartItems, setCartItems] = useState([]);
-  const [isLoadingPrice, setIsLoadingPrice] = useState(false); // Добавлено состояние загрузки цены
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(true);
 
   useEffect(() => {
     const userData = localStorage.getItem("currentUser");
@@ -33,10 +34,21 @@ const MenuItem = ({ item, updateCart }) => {
     }
   }, [cartItems, item.id]);
 
+  useEffect(() => {
+    fetch(`${url}/api/MenuItem/${item.id}`)
+      .then(response => response.json())
+      .then(data => {
+        setIsAvailable(data.isAvailable);
+      })
+      .catch(error => {
+        console.error("Error fetching item availability:", error);
+      });
+  }, [item.id]);
+
   const increaseQuantity = () => {
     setQuantity((prevQuantity) => {
       const newQuantity = prevQuantity + 1;
-      setIsLoadingPrice(true); // Показываем спиннер перед обновлением цены
+      setIsLoadingPrice(true);
       addToCart();
       return newQuantity;
     });
@@ -46,18 +58,33 @@ const MenuItem = ({ item, updateCart }) => {
     if (quantity > 0) {
       setQuantity((prevQuantity) => {
         const newQuantity = prevQuantity - 1;
-        setIsLoadingPrice(true); // Показываем спиннер перед обновлением цены
+        setIsLoadingPrice(true);
         removeFromCart();
         return newQuantity;
       });
     }
   };
 
+  const removeItemCompletely = () => {
+    const userData = localStorage.getItem("currentUser");
+    if (userData) {
+      const user = JSON.parse(userData);
+      fetch(`${url}/api/Cart/user/${user.id}/remove-item/${item.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      })
+        .then(response => {
+          if (response.ok) updateCart(item.id, 0); // Set quantity to 0 to remove the item
+        })
+        .catch(error => console.error("Error removing item from cart:", error));
+    }
+  };
+
   useEffect(() => {
     if (quantity > 0) {
       setTimeout(() => {
-        setIsLoadingPrice(false); // Убираем спиннер после загрузки цены
-      }, 500); // Имитация задержки запроса
+        setIsLoadingPrice(false);
+      }, 500);
     }
   }, [quantity]);
 
@@ -95,6 +122,26 @@ const MenuItem = ({ item, updateCart }) => {
     }
   };
 
+  if (!isAvailable) {
+    return (
+      <div className="flex flex-col items-center justify-between p-4 m-2 border-2 border-white rounded-lg bg-white/80 shadow-md w-52 text-center">
+        <img
+          src={item.imageUrl}
+          alt={item.title}
+          className="w-36 h-36 rounded-full object-cover mb-4 opacity-50"
+        />
+        <h3 className="text-lg text-black mb-2">{item.title}</h3>
+        <div className="text-red-500 font-bold">Извините, блюдо закончилось</div>
+        <button
+          className="mt-2 bg-[rgb(50,48,52)] text-[rgb(255,204,1)] py-1 px-2 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(50,48,52)]"
+          onClick={removeItemCompletely}
+        >
+          Удалить из заказа
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-between p-4 m-2 border-2 border-white rounded-lg bg-white/80 shadow-md w-52 text-center">
       {imgError ? (
@@ -110,6 +157,13 @@ const MenuItem = ({ item, updateCart }) => {
         />
       )}
       <h3 className="text-lg text-black mb-2">{item.title}</h3>
+      <div className="text-lg mx-2 mb-2">
+        {isLoadingPrice ? (
+          <ImSpinner8 className="animate-spin text-yellow-500 text-2xl" />
+        ) : (
+          <>Общая стоимость: {totalPrice} ₽</>
+        )}
+      </div>
       <div className="flex items-center justify-between w-full">
         <button
           className="bg-black text-yellow-500 rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-800 active:bg-gray-900 transition-colors duration-150"
@@ -120,8 +174,6 @@ const MenuItem = ({ item, updateCart }) => {
 
         {quantity > 0 && <span className="text-lg mx-4">{quantity}</span>}
 
-        <span className="text-lg mx-2">{item.price} ₽</span>
-
         <button
           className="bg-black text-yellow-500 rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-800 active:bg-gray-900 transition-colors duration-150"
           onClick={increaseQuantity}
@@ -129,16 +181,6 @@ const MenuItem = ({ item, updateCart }) => {
           <FaPlusCircle />
         </button>
       </div>
-
-      {quantity > 0 && (
-        <div className="mt-2 text-sm text-black">
-          {isLoadingPrice ? (
-            <ImSpinner8 className="animate-spin text-yellow-500 text-2xl" />
-          ) : (
-            <>Общая стоимость: {totalPrice} ₽</>
-          )}
-        </div>
-      )}
     </div>
   );
 };

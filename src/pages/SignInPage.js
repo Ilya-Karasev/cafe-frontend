@@ -24,7 +24,7 @@ const SignInPage = () => {
     setError(""); // Сброс ошибки перед запросом
 
     try {
-      const response = await fetch("https://caffe-production.up.railway.app/api/User/login", {
+      const response = await fetch("http://localhost:5253/api/User/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

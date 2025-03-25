@@ -1,4 +1,4 @@
-const url = "https://caffe-production.up.railway.app";
+const url = "http://localhost:5253";
 
 // Функция для получения всех элементов меню
 export const fetchMenuItems = async () => {

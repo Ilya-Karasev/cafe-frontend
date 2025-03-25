@@ -1,6 +1,6 @@
 export const fetchMenuItems = async (category = null) => {
   try {
-    let url = "https://caffe-production.up.railway.app/api/MenuItem";
+    let url = "http://localhost:5253/api/MenuItem";
     if (category) {
       url += `?category=${category}`;
     }

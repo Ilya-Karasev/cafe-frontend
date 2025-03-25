@@ -16,8 +16,8 @@ const AdminPanelPage = () => {
     category: 1,
     isAvailable: false,
   });
-  const [editItem, setEditItem] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [editItem, setEditItem] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
@@ -34,38 +34,98 @@ const AdminPanelPage = () => {
     loadMenuItems();
   }, []);
 
-  const handleSave = async (item, isNew = false) => {
-    try {
-      const savedItem = isNew ? await addMenuItem(item) : await updateMenuItem(item);
-      setMenuItems((prev) =>
-        isNew ? [...prev, savedItem] : prev.map((i) => (i.id === savedItem.id ? savedItem : i))
-      );
-      setFilteredMenuItems((prev) =>
-        isNew ? [...prev, savedItem] : prev.map((i) => (i.id === savedItem.id ? savedItem : i))
-      );
-      if (isNew) setNewDish({ title: "", description: "", imageUrl: "", price: "", category: 1, isAvailable: false });
-      else setEditItem(null);
-    } catch (error) {
-      console.error(`Error ${isNew ? "adding" : "updating"} dish:`, error);
+  const handleAddDish = async () => {
+    if (newDish.title && newDish.imageUrl && newDish.price) {
+      try {
+        const newItem = await addMenuItem(newDish);
+        setMenuItems([...menuItems, newItem]);
+        setFilteredMenuItems([...filteredMenuItems, newItem]);
+        setNewDish({
+          title: "",
+          description: "",
+          imageUrl: "",
+          price: "",
+          category: 1,
+          isAvailable: false,
+        });
+      } catch (error) {
+        console.error("Error adding dish:", error);
+      }
     }
   };
 
-  const handleToggleAvailability = async (item, isAvailable) => {
+  const handleHideDish = async (item) => {
     try {
-      const updatedItem = await updateMenuItem({ ...item, isAvailable });
-      setMenuItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
-      setFilteredMenuItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)));
+      await updateMenuItem({ ...item, isAvailable: false });
+      setMenuItems(
+        menuItems.map((menuItem) =>
+          menuItem.id === item.id ? { ...menuItem, isAvailable: false } : menuItem
+        )
+      );
+      setFilteredMenuItems(
+        filteredMenuItems.map((menuItem) =>
+          menuItem.id === item.id ? { ...menuItem, isAvailable: false } : menuItem
+        )
+      );
     } catch (error) {
-      console.error(`Error ${isAvailable ? "restoring" : "hiding"} dish:`, error);
+      console.error("Error hiding dish:", error);
     }
   };
 
-  const handleDelete = async (confirm) => {
+  const handleRestoreDish = async (item) => {
+    try {
+      await updateMenuItem({ ...item, isAvailable: true });
+      setMenuItems(
+        menuItems.map((menuItem) =>
+          menuItem.id === item.id ? { ...menuItem, isAvailable: true } : menuItem
+        )
+      );
+      setFilteredMenuItems(
+        filteredMenuItems.map((menuItem) =>
+          menuItem.id === item.id ? { ...menuItem, isAvailable: true } : menuItem
+        )
+      );
+    } catch (error) {
+      console.error("Error restoring dish:", error);
+    }
+  };
+
+  const handleEditDish = (item) => {
+    setEditItem(item);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editItem) {
+      try {
+        await updateMenuItem(editItem);
+        setMenuItems(
+          menuItems.map((item) =>
+            item.id === editItem.id ? editItem : item
+          )
+        );
+        setFilteredMenuItems(
+          filteredMenuItems.map((item) =>
+            item.id === editItem.id ? editItem : item
+          )
+        );
+        setEditItem(null);
+      } catch (error) {
+        console.error("Error editing dish:", error);
+      }
+    }
+  };
+
+  const handleDeleteDish = (id) => {
+    setItemToDelete(id);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmDelete = async (confirm) => {
     if (confirm && itemToDelete) {
       try {
         await deleteMenuItem(itemToDelete);
-        setMenuItems((prev) => prev.filter((item) => item.id !== itemToDelete));
-        setFilteredMenuItems((prev) => prev.filter((item) => item.id !== itemToDelete));
+        setMenuItems(menuItems.filter((item) => item.id !== itemToDelete));
+        setFilteredMenuItems(filteredMenuItems.filter((item) => item.id !== itemToDelete));
       } catch (error) {
         console.error("Error deleting dish:", error);
       }
@@ -76,12 +136,11 @@ const AdminPanelPage = () => {
 
   const handleCategoryFilter = (category) => {
     setSelectedCategory(category);
-    setFilteredMenuItems(category === null ? menuItems : menuItems.filter((item) => item.category === category));
-  };
-
-  const handleInputChange = (field) => (e) => {
-    const value = e.target.value;
-    editItem ? setEditItem((prev) => ({ ...prev, [field]: value })) : setNewDish((prev) => ({ ...prev, [field]: value }));
+    if (category === null) {
+      setFilteredMenuItems(menuItems);
+    } else {
+      setFilteredMenuItems(menuItems.filter((item) => item.category === category));
+    }
   };
 
   return (
@@ -97,32 +156,32 @@ const AdminPanelPage = () => {
               type="text"
               placeholder="Название блюда"
               value={editItem ? editItem.title : newDish.title}
-              onChange={handleInputChange("title")}
+              onChange={(e) => editItem ? setEditItem({ ...editItem, title: e.target.value }) : setNewDish({ ...newDish, title: e.target.value })}
               className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             />
             <textarea
               placeholder="Описание"
               value={editItem ? editItem.description : newDish.description}
-              onChange={handleInputChange("description")}
+              onChange={(e) => editItem ? setEditItem({ ...editItem, description: e.target.value }) : setNewDish({ ...newDish, description: e.target.value })}
               className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             />
             <input
               type="text"
               placeholder="URL картинки"
               value={editItem ? editItem.imageUrl : newDish.imageUrl}
-              onChange={handleInputChange("imageUrl")}
+              onChange={(e) => editItem ? setEditItem({ ...editItem, imageUrl: e.target.value }) : setNewDish({ ...newDish, imageUrl: e.target.value })}
               className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             />
             <input
               type="number"
               placeholder="Цена"
               value={editItem ? editItem.price : newDish.price}
-              onChange={handleInputChange("price")}
+              onChange={(e) => editItem ? setEditItem({ ...editItem, price: e.target.value }) : setNewDish({ ...newDish, price: e.target.value })}
               className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             />
             <select
               value={editItem ? editItem.category : newDish.category}
-              onChange={(e) => handleInputChange("category")(e)}
+              onChange={(e) => editItem ? setEditItem({ ...editItem, category: Number(e.target.value) }) : setNewDish({ ...newDish, category: Number(e.target.value) })}
               className="p-2 rounded text-[rgb(36,34,39)] border border-[rgb(255,204,1)]"
             >
               <option value={1}>Основные блюда</option>
@@ -134,7 +193,7 @@ const AdminPanelPage = () => {
             </select>
             <button
               className="bg-[rgb(255,204,1)] text-[rgb(50,48,52)] py-2 px-4 rounded hover:bg-[rgb(50,48,52)] hover:text-[rgb(255,204,1)] transition-colors duration-300"
-              onClick={() => handleSave(editItem || newDish, !editItem)}
+              onClick={editItem ? handleSaveEdit : handleAddDish}
             >
               {editItem ? "Сохранить изменения" : "Добавить блюдо"}
             </button>
@@ -154,28 +213,58 @@ const AdminPanelPage = () => {
             Меню управления
           </h2>
           <div className="font-bold flex justify-center gap-2 mb-4">
-            {[null, 1, 2, 3, 4, 5, 6].map((category) => (
-              <button
-                key={category}
-                className={`py-2 px-4 rounded ${selectedCategory === category ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
-                onClick={() => handleCategoryFilter(category)}
-              >
-                {category === null ? "Все" : ["Основные блюда", "Закуски", "Супы", "Салаты", "Десерты", "Напитки"][category - 1]}
-              </button>
-            ))}
+            <button
+              className={`py-2 px-4 rounded ${selectedCategory === null ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
+              onClick={() => handleCategoryFilter(null)}
+            >
+              Все
+            </button>
+            <button
+              className={`py-2 px-4 rounded ${selectedCategory === 1 ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
+              onClick={() => handleCategoryFilter(1)}
+            >
+              Основные блюда
+            </button>
+            <button
+              className={`py-2 px-4 rounded ${selectedCategory === 2 ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
+              onClick={() => handleCategoryFilter(2)}
+            >
+              Закуски
+            </button>
+            <button
+              className={`py-2 px-4 rounded ${selectedCategory === 3 ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
+              onClick={() => handleCategoryFilter(3)}
+            >
+              Супы
+            </button>
+            <button
+              className={`py-2 px-4 rounded ${selectedCategory === 4 ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
+              onClick={() => handleCategoryFilter(4)}
+            >
+              Салаты
+            </button>
+            <button
+              className={`py-2 px-4 rounded ${selectedCategory === 5 ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
+              onClick={() => handleCategoryFilter(5)}
+            >
+              Десерты
+            </button>
+            <button
+              className={`py-2 px-4 rounded ${selectedCategory === 6 ? "bg-[rgb(255,204,1)] text-[rgb(50,48,52)]" : "bg-[rgb(50,48,52)] text-[rgb(255,204,1)]"}`}
+              onClick={() => handleCategoryFilter(6)}
+            >
+              Напитки
+            </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {filteredMenuItems.map((item) => (
               <AdminMenuItem
                 key={item.id}
                 item={item}
-                onHide={() => handleToggleAvailability(item, false)}
-                onRestore={() => handleToggleAvailability(item, true)}
-                onEdit={() => setEditItem(item)}
-                onDelete={() => {
-                  setItemToDelete(item.id);
-                  setShowConfirmation(true);
-                }}
+                onHide={handleHideDish}
+                onRestore={handleRestoreDish}
+                onEdit={handleEditDish}
+                onDelete={handleDeleteDish}
               />
             ))}
           </div>
@@ -186,13 +275,13 @@ const AdminPanelPage = () => {
                 <div className="flex justify-end mt-4">
                   <button
                     className="mr-2 bg-[rgb(50,48,52)] text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(50,48,52)]"
-                    onClick={() => handleDelete(true)}
+                    onClick={() => handleConfirmDelete(true)}
                   >
                     Да
                   </button>
                   <button
                     className="bg-[rgb(50,48,52)] text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(50,48,52)]"
-                    onClick={() => handleDelete(false)}
+                    onClick={() => handleConfirmDelete(false)}
                   >
                     Нет
                   </button>

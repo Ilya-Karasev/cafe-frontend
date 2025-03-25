@@ -19,7 +19,7 @@ const UserAccountPage = () => {
       <div className="flex flex-grow">
         <div className="w-1/4 p-4 flex flex-col items-center">
           <img
-            src={user.image}
+            src={user.userIcon}
             alt="Profile"
             className="w-128 h-128 mb-4 rounded-xl"
           />

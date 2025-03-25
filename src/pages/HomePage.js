@@ -5,7 +5,7 @@ import NavbarMenu from "../components/NavbarMenu";
 import { fetchMenuItems } from "../services/menuService";
 import "../style/WebsiteBackground.css";
 
-const url = "https://caffe-production.up.railway.app";
+const url = "http://localhost:5253";
 
 const HomePage = () => {
   const [menuItems, setMenuItems] = useState([]);

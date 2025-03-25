@@ -4,16 +4,15 @@ import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
 
-const url = "https://caffe-production.up.railway.app";
+const url = "http://localhost:5253";
 
 const EditAccountPage = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [profilePicture, setProfilePicture] = useState("");
-  const [imageUrl, setImageUrl] = useState(""); // Добавлено поле для URL изображения
-  const [password, setPassword] = useState(""); // Для нового пароля
-  const [newPassword, setNewPassword] = useState(""); // Поле для нового пароля
+  const [userIcon, setUserIcon] = useState(""); // Изменено с image на userIcon
+  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
@@ -25,10 +24,9 @@ const EditAccountPage = () => {
       setName(user.name || "");
       setPhone(user.phone || "");
       setEmail(user.email || "");
-      setProfilePicture(user.image || "");
-      setImageUrl(user.image || ""); // Заполняем URL из localStorage
+      setUserIcon(user.userIcon || ""); // Загружаем иконку профиля
       setPassword(user.password || "");
-      setNewPassword(user.password || ""); // Устанавливаем значение для нового пароля
+      setNewPassword(user.password || "");
     }
   }, []);
 
@@ -37,21 +35,15 @@ const EditAccountPage = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setProfilePicture(reader.result);
-        setImageUrl(""); // Очищаем URL, если выбрали файл
+        setUserIcon(reader.result.split(",")[1]); // Конвертируем в Base64
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleImageUrlChange = (e) => {
-    setImageUrl(e.target.value);
-    setProfilePicture(e.target.value); // Приоритет у URL, если введен
-  };
-
   const handleSave = async (e) => {
     e.preventDefault();
-    
+
     if (!userData) {
       console.error("Ошибка: пользователь не найден в localStorage");
       return;
@@ -62,19 +54,18 @@ const EditAccountPage = () => {
       name,
       phone,
       email,
-      image: profilePicture,
-      password: newPassword || password, // Если новый пароль пустой, используем старый
+      password: newPassword || password,
       isAdmin: userData.isAdmin,
       isActive: userData.isActive,
     };
 
     try {
       console.log("Отправляемый объект:", JSON.stringify(updatedUser, null, 2));
+
+      // Отправка обновлённых данных пользователя
       const response = await fetch(`${url}/api/User/${userData.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUser),
       });
 
@@ -82,7 +73,16 @@ const EditAccountPage = () => {
         const updatedData = await response.json();
         localStorage.setItem("currentUser", JSON.stringify(updatedData));
         setUserData(updatedData);
-        setPassword(updatedData.password || "");
+
+        // Если загружена новая иконка, отправляем её
+        if (userIcon) {
+          await fetch(`${url}/api/User/${userData.id}/upload-icon`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: userIcon }), // Отправляем Base64
+          });
+        }
+
         alert("Данные успешно обновлены!");
         navigate("/user-account");
       } else {
@@ -101,28 +101,14 @@ const EditAccountPage = () => {
         <div className="bg-black bg-opacity-50 p-8 rounded-lg shadow-lg w-full max-w-3xl flex">
           <div className="flex flex-col items-center mr-8">
             <img
-              src={profilePicture}
+              src={`data:image/png;base64,${userIcon}`} // Отображение иконки
               alt="Profile"
               className="w-48 h-48 mb-6 rounded-xl"
             />
             <label className="block text-[rgb(255,204,1)] font-bold mb-2 text-center">
-              Изменить фотографию профиля
+              Изменить иконку профиля
             </label>
-            <input
-              type="file"
-              onChange={handleImageUpload}
-              className="text-[rgb(255,204,1)]"
-            />
-            <label className="block text-[rgb(255,204,1)] font-bold mt-4 mb-2 text-center">
-              ...или введите URL изображения
-            </label>
-            <input
-              type="text"
-              value={imageUrl}
-              onChange={handleImageUrlChange}
-              placeholder="https://example.com/image.jpg"
-              className="w-full p-2 border border-[rgb(36,34,39)] bg-black text-[rgb(255,204,1)] rounded"
-            />
+            <input type="file" onChange={handleImageUpload} className="text-[rgb(255,204,1)]" />
             <Link to="/user-account" className="mt-20">
               <button className="bg-[rgb(255,204,1)] font-bold text-[rgb(36,34,39)] py-2 px-4 rounded hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] transition-colors">
                 Вернуться к профилю
