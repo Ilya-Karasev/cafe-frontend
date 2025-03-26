@@ -46,24 +46,28 @@ const MenuItem = ({ item, updateCart }) => {
   }, [item.id]);
 
   const increaseQuantity = () => {
-    setQuantity((prevQuantity) => {
-      const newQuantity = prevQuantity + 1;
-      setIsLoadingPrice(true);
-      addToCart();
-      return newQuantity;
-    });
+    setIsLoadingPrice(true);
+    setQuantity(prevQuantity => prevQuantity + 1);
+    addToCart();
   };
 
   const decreaseQuantity = () => {
     if (quantity > 0) {
-      setQuantity((prevQuantity) => {
-        const newQuantity = prevQuantity - 1;
-        setIsLoadingPrice(true);
-        removeFromCart();
-        return newQuantity;
-      });
+      if (quantity === 1) setIsLoadingPrice(false); // Избегаем зависания спиннера при удалении последней порции
+      setQuantity(prevQuantity => prevQuantity - 1);
+      removeFromCart();
     }
   };
+
+  useEffect(() => {
+    if (quantity > 0) {
+      setTimeout(() => {
+        setIsLoadingPrice(false);
+      }, 500);
+    } else {
+      setIsLoadingPrice(false); // Если блюдо удалено, сразу отключаем спиннер
+    }
+  }, [quantity]);
 
   const removeItemCompletely = () => {
     const userData = localStorage.getItem("currentUser");
@@ -74,21 +78,15 @@ const MenuItem = ({ item, updateCart }) => {
         headers: { "Content-Type": "application/json" },
       })
         .then(response => {
-          if (response.ok) updateCart(item.id, 0); // Set quantity to 0 to remove the item
+          if (response.ok) {
+            setQuantity(0);
+            setIsLoadingPrice(false);
+            updateCart(item.id, 0);
+          }
         })
         .catch(error => console.error("Error removing item from cart:", error));
     }
   };
-
-  useEffect(() => {
-    if (quantity > 0) {
-      setTimeout(() => {
-        setIsLoadingPrice(false);
-      }, 500);
-    }
-  }, [quantity]);
-
-  const totalPrice = quantity * item.price;
 
   const removeFromCart = () => {
     const userData = localStorage.getItem("currentUser");
@@ -124,7 +122,7 @@ const MenuItem = ({ item, updateCart }) => {
 
   if (!isAvailable) {
     return (
-      <div className="flex flex-col items-center justify-between p-4 m-2 border-2 border-white rounded-lg bg-white/80 shadow-md w-52 text-center">
+      <div className="flex flex-col items-center justify-between p-4 m-2 border-2 border-white rounded-lg bg-white shadow-md w-52 text-center">
         <img
           src={item.imageUrl}
           alt={item.title}
@@ -143,7 +141,7 @@ const MenuItem = ({ item, updateCart }) => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-between p-4 m-2 border-2 border-white rounded-lg bg-white/80 shadow-md w-52 text-center">
+    <div className="flex flex-col items-center justify-between p-4 m-2 border-2 border-white rounded-lg bg-white shadow-md w-52 text-center">
       {imgError ? (
         <div className="flex items-center justify-center w-36 h-36 mb-4 bg-gray-200 rounded-full">
           <FaImage className="w-16 h-16 text-gray-400" />
@@ -160,8 +158,10 @@ const MenuItem = ({ item, updateCart }) => {
       <div className="text-lg mx-2 mb-2">
         {isLoadingPrice ? (
           <ImSpinner8 className="animate-spin text-yellow-500 text-2xl" />
+        ) : quantity > 0 ? (
+          <>{quantity * item.price} ₽</>
         ) : (
-          <>Общая стоимость: {totalPrice} ₽</>
+          <>{item.price} ₽</>
         )}
       </div>
       <div className="flex items-center justify-between w-full">

@@ -10,7 +10,7 @@ const EditAccountPage = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [userIcon, setUserIcon] = useState(""); // Изменено с image на userIcon
+  const [userIcon, setUserIcon] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [userData, setUserData] = useState(null);
@@ -24,7 +24,7 @@ const EditAccountPage = () => {
       setName(user.name || "");
       setPhone(user.phone || "");
       setEmail(user.email || "");
-      setUserIcon(user.userIcon || ""); // Загружаем иконку профиля
+      setUserIcon(user.userIcon || "");
       setPassword(user.password || "");
       setNewPassword(user.password || "");
     }
@@ -35,7 +35,7 @@ const EditAccountPage = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setUserIcon(reader.result.split(",")[1]); // Конвертируем в Base64
+        setUserIcon(reader.result.split(",")[1]); // Сохраняем Base64-строку
       };
       reader.readAsDataURL(file);
     }
@@ -57,12 +57,12 @@ const EditAccountPage = () => {
       password: newPassword || password,
       isAdmin: userData.isAdmin,
       isActive: userData.isActive,
+      userIcon: userIcon || userData.userIcon, // Обновляем userIcon
     };
 
     try {
       console.log("Отправляемый объект:", JSON.stringify(updatedUser, null, 2));
 
-      // Отправка обновлённых данных пользователя
       const response = await fetch(`${url}/api/User/${userData.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -71,17 +71,20 @@ const EditAccountPage = () => {
 
       if (response.ok) {
         const updatedData = await response.json();
-        localStorage.setItem("currentUser", JSON.stringify(updatedData));
-        setUserData(updatedData);
 
         // Если загружена новая иконка, отправляем её
-        if (userIcon) {
+        if (userIcon && userIcon !== userData.userIcon) {
           await fetch(`${url}/api/User/${userData.id}/upload-icon`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: userIcon }), // Отправляем Base64
+            body: JSON.stringify({ image: userIcon }),
           });
+
+          updatedData.userIcon = userIcon; // Обновляем userIcon в данных пользователя
         }
+
+        localStorage.setItem("currentUser", JSON.stringify(updatedData));
+        setUserData(updatedData);
 
         alert("Данные успешно обновлены!");
         navigate("/user-account");
