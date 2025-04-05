@@ -103,9 +103,12 @@ const CartPage = () => {
     if (unavailableItems.length > 0 && ordersData.length > 0) {
       setOrdersData((prevOrders) => {
         return prevOrders.map((order) => {
-          const updatedItems = order.items.filter((item) =>
-            !unavailableItems.some((unavailableItem) => unavailableItem.id === item.id)
-          );
+          const updatedItems = order.items.map((item) => {
+            if (unavailableItems.some((unavailableItem) => unavailableItem.id === item.id)) {
+              return { ...item, isAvailable: false };
+            }
+            return { ...item, isAvailable: true };
+          });
           return { ...order, items: updatedItems };
         });
       });
@@ -234,7 +237,11 @@ const CartPage = () => {
               </h2>
               <div className="flex flex-wrap">
                 {selectedOrder.items.map((item) => (
-                  <MenuItem key={item.id} item={item} updateQuantity={updateItemQuantity} />
+                  <MenuItem
+                    key={item.id}
+                    item={{ ...item, isAvailable: item.isAvailable }}
+                    updateQuantity={updateItemQuantity}
+                  />
                 ))}
               </div>
             </div>
