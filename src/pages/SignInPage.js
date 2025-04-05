@@ -10,7 +10,6 @@ const SignInPage = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Загрузка сохраненных данных при монтировании
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (savedUser) {
@@ -21,7 +20,7 @@ const SignInPage = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(""); // Сброс ошибки перед запросом
+    setError("");
 
     try {
       const response = await fetch("http://localhost:5253/api/User/login", {
@@ -37,13 +36,7 @@ const SignInPage = () => {
       }
 
       const userData = await response.json();
-
-      // Сохраняем данные в localStorage
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify({ email, password, ...userData })
-      );
-
+      localStorage.setItem("currentUser", JSON.stringify({ email, password, ...userData }));
       navigate("/user-account");
     } catch (error) {
       setError("Ошибка входа. Проверьте логин и пароль.");
@@ -88,7 +81,11 @@ const SignInPage = () => {
               />
             </div>
             <div className="mb-4 text-center">
-              <button type="button" className="text-[rgb(255,204,1)] hover:underline">
+              <button 
+                type="button" 
+                className="text-[rgb(255,204,1)] hover:underline"
+                onClick={() => navigate("/forgot-password")}
+              >
                 Забыли логин / пароль?
               </button>
             </div>
@@ -98,6 +95,13 @@ const SignInPage = () => {
                 className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors"
               >
                 Войти
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/sign-up")}
+                className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors"
+              >
+                Регистрация
               </button>
             </div>
           </form>

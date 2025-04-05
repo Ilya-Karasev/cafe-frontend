@@ -8,9 +8,29 @@ const UserAccountPage = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("currentUser"));
 
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen justify-center items-center text-white">
+        <h2 className="text-2xl font-bold">Ошибка: пользователь не найден</h2>
+        <Link to="/" className="mt-4 bg-yellow-500 text-black py-2 px-4 rounded hover:bg-black hover:text-yellow-500">
+          На главную
+        </Link>
+      </div>
+    );
+  }
+
   const handleLogout = () => {
-    localStorage.removeItem("currentUser"); // Очистка localStorage
-    navigate("/"); // Перенаправление на главную страницу
+    localStorage.removeItem("currentUser");
+    navigate("/");
+  };
+
+  const getUserIcon = () => {
+    if (user.userIcon) {
+      return `data:${user.imageType};base64,${user.userIcon}`;
+    } else if (user.image) {
+      return `${user.image}`
+    }
+    return "https://yt3.googleusercontent.com/ytc/AIdro_nz_cQxd22UhHWPFSheene_FOQEDrI1gDYuWMfHYhg0iQ=s900-c-k-c0x00ffffff-no-rj";
   };
 
   return (
@@ -19,7 +39,7 @@ const UserAccountPage = () => {
       <div className="flex flex-grow">
         <div className="w-1/4 p-4 flex flex-col items-center">
           <img
-            src={user.userIcon}
+            src={getUserIcon()}
             alt="Profile"
             className="w-128 h-128 mb-4 rounded-xl"
           />
