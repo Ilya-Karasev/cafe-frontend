@@ -1,6 +1,9 @@
+import { getApiUrl } from "../configs/apiConfig";
+
 export const fetchMenuItems = async (category = null) => {
+  const baseUrl = getApiUrl();
   try {
-    let url = "http://localhost:5253/api/MenuItem";
+    let url = `${baseUrl}/api/MenuItem`;
     if (category) {
       url += `?category=${category}`;
     }

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaImage, FaMinusCircle, FaPlusCircle } from "react-icons/fa";
 import { ImSpinner8 } from "react-icons/im";
-
-const url = "http://localhost:5253";
+import { getApiUrl } from "../configs/apiConfig";
 
 const MenuItem = ({ item, updateCart }) => {
   const [imgError, setImgError] = useState(false);
@@ -10,6 +9,8 @@ const MenuItem = ({ item, updateCart }) => {
   const [cartItems, setCartItems] = useState([]);
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [isAvailable, setIsAvailable] = useState(true);
+
+  const url = getApiUrl();
 
   useEffect(() => {
     const userData = localStorage.getItem("currentUser");
@@ -25,7 +26,7 @@ const MenuItem = ({ item, updateCart }) => {
           setCartItems([]);
         });
     }
-  }, []);
+  }, [url]);
 
   useEffect(() => {
     if (cartItems.length > 0) {
@@ -43,7 +44,7 @@ const MenuItem = ({ item, updateCart }) => {
       .catch(error => {
         console.error("Error fetching item availability:", error);
       });
-  }, [item.id]);
+  }, [item.id, url]);
 
   const increaseQuantity = () => {
     setQuantity((prevQuantity) => {

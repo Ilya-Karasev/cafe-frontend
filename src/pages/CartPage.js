@@ -4,8 +4,7 @@ import Footer from "../components/Footer";
 import MenuItem from "../components/MenuItem";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
-
-const url = "http://localhost:5253";
+import { getApiUrl } from "../configs/apiConfig";
 
 const CartPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -15,6 +14,8 @@ const CartPage = () => {
   const [orderHistory, setOrderHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [unavailableItems, setUnavailableItems] = useState([]);
+
+  const url = getApiUrl();
 
   const updateItemQuantity = (itemId, newQuantity) => {
     setOrdersData((prevOrders) => {
@@ -88,7 +89,7 @@ const CartPage = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [url]);
 
   const handleDeleteOrder = (orderId) => {
     const orderToDelete = ordersData.find((order) => order.id === orderId);

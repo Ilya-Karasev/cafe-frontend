@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
-
-const url = "http://localhost:5253";
+import { getApiUrl } from "../configs/apiConfig";
 
 const EditAccountPage = () => {
   const [name, setName] = useState("");
@@ -15,6 +14,8 @@ const EditAccountPage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
+
+  const url = getApiUrl(); 
 
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");

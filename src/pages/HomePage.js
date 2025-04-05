@@ -4,8 +4,7 @@ import MenuItem from "../components/MenuItem";
 import NavbarMenu from "../components/NavbarMenu";
 import { fetchMenuItems } from "../services/menuService";
 import "../style/WebsiteBackground.css";
-
-const url = "http://localhost:5253";
+import { getApiUrl } from "../configs/apiConfig";
 
 const HomePage = () => {
   const [menuItems, setMenuItems] = useState([]);
@@ -13,6 +12,8 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+
+  const url = getApiUrl();
 
   useEffect(() => {
     const loadMenuItems = async () => {
@@ -37,11 +38,11 @@ const HomePage = () => {
       fetch(`${url}/api/Cart/user/${user.id}`)
         .then(response => response.json())
         .then(data => {
-          setCartItems(data.items); 
+          setCartItems(data.items);
         })
         .catch(error => console.error("Error fetching cart data:", error));
     }
-  }, []);
+  }, [url]);
 
   const handleCategorySelect = (category) => {
     if (category) {
@@ -103,7 +104,7 @@ const HomePage = () => {
                 key={item.id}
                 item={item}
                 cartItems={cartItems}
-                updateCart={updateCart} 
+                updateCart={updateCart}
               />
             ))}
         </div>

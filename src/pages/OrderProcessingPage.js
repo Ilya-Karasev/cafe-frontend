@@ -3,13 +3,14 @@ import { FaCheck, FaTimes } from "react-icons/fa";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
-
-const url = "http://localhost:5253/api/Order";
+import { getApiUrl } from "../configs/apiConfig";
 
 const OrderProcessingPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [hoveredOrderId, setHoveredOrderId] = useState(null);
   const [ordersData, setOrdersData] = useState([]);
+
+  const url = getApiUrl(); 
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -27,7 +28,7 @@ const OrderProcessingPage = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [url]);
 
   const handleCancelOrder = async (orderId) => {
     try {
