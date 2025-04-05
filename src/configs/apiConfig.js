@@ -1,8 +1,9 @@
 const apiConfig = {
-  protocol: 'https',
-  domain: 'caffe-production.up.railway.app',
+  protocol: 'http',
+  domain: 'localhost',
+  port: '5253',
 };
 
 export const getApiUrl = () => {
-  return `${apiConfig.protocol}://${apiConfig.domain}`;
+  return `${apiConfig.protocol}://${apiConfig.domain}:${apiConfig.port}`;
 };
