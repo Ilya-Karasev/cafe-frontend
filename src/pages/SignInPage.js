@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
+import { getApiUrl } from "../configs/apiConfig";
 
 const SignInPage = () => {
   const [email, setEmail] = useState("");
@@ -23,7 +24,8 @@ const SignInPage = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5253/api/User/login", {
+      const url = getApiUrl();
+      const response = await fetch(`${url}/api/User/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,8 +83,8 @@ const SignInPage = () => {
               />
             </div>
             <div className="mb-4 text-center">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="text-[rgb(255,204,1)] hover:underline"
                 onClick={() => navigate("/forgot-password")}
               >

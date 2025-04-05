@@ -1,8 +1,9 @@
-import React, { useState } from "react"; 
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
+import { getApiUrl } from "../configs/apiConfig";
 
 const SignUpPage = () => {
   const [name, setName] = useState("");
@@ -29,9 +30,10 @@ const SignUpPage = () => {
       image: "default.png", // Заглушка
       isActive: true, // Заглушка
     };
-    
+
     try {
-      const response = await fetch("http://localhost:5253/api/User", {
+      const url = getApiUrl();
+      const response = await fetch(`${url}/api/User`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
