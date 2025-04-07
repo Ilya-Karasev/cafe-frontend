@@ -5,8 +5,7 @@ import MenuItem from "../components/MenuItem";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
 import {FaShoppingCart, FaCreditCard, FaMoneyCheckAlt } from "react-icons/fa";
-
-const url = "http://localhost:5253";
+import { API_BASE_URL as url } from "../config";
 
 const CartPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -245,7 +244,7 @@ const CartPage = () => {
           )}
             {/* Кнопка оплаты */}
             <button
-              className="absolute bottom-4 right-4 bg-yellow-400 text-gray-900 p-4 rounded-full shadow-lg hover:bg-yellow-500 transition"
+              className="absolute bottom-4 right-4 bg-yellow-400 text-gray-900 p-6 rounded-full shadow-lg hover:bg-yellow-500 transition"
               onClick={() => setIsPaymentModalOpen(true)}
             >
               <FaShoppingCart className="text-2xl" />

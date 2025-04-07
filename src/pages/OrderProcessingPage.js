@@ -3,8 +3,7 @@ import { FaCheck, FaTimes } from "react-icons/fa";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
-
-const url = "http://localhost:5253/api/Order";
+import { API_BASE_URL as url } from "../config";
 
 const OrderProcessingPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -14,7 +13,7 @@ const OrderProcessingPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch(url);
+        const response = await fetch(`${url}/api/Order`);
         if (response.ok) {
           const data = await response.json();
           setOrdersData(data);
@@ -31,7 +30,7 @@ const OrderProcessingPage = () => {
 
   const handleCancelOrder = async (orderId) => {
     try {
-      const response = await fetch(`${url}/${orderId}/cancel`, {
+      const response = await fetch(`${url}/api/Order/${orderId}/cancel`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
       });
@@ -51,7 +50,7 @@ const OrderProcessingPage = () => {
 
   const handleCompleteOrder = async (orderId) => {
     try {
-      const response = await fetch(`${url}/${orderId}/complete`, {
+      const response = await fetch(`${url}/api/Order/${orderId}/complete`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
       });

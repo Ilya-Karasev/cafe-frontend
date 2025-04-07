@@ -4,8 +4,7 @@ import MenuItem from "../components/MenuItem";
 import NavbarMenu from "../components/NavbarMenu";
 import { fetchMenuItems } from "../services/menuService";
 import "../style/WebsiteBackground.css";
-
-const url = "http://localhost:5253";
+import { API_BASE_URL as url } from "../config";
 
 const HomePage = () => {
   const [menuItems, setMenuItems] = useState([]);

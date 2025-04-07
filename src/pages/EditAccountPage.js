@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
-
-const url = "http://localhost:5253";
+import { API_BASE_URL as url } from "../config";
 
 const EditAccountPage = () => {
   const [name, setName] = useState("");

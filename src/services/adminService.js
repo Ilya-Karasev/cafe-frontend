@@ -1,4 +1,4 @@
-const url = "http://localhost:5253";
+import { API_BASE_URL as url } from "../config";
 
 // Функция для получения всех элементов меню
 export const fetchMenuItems = async () => {
