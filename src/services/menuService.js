@@ -1,12 +1,13 @@
-import { API_BASE_URL as url } from "../config";
+import { getApiUrl } from "../configs/apiConfig";
 
 export const fetchMenuItems = async (category = null) => {
+  const baseUrl = getApiUrl();
   try {
-    let url_menu = `${url}/api/MenuItem`;
+    let url = `${baseUrl}/api/MenuItem`;
     if (category) {
-      url_menu += `?category=${category}`;
+      url += `?category=${category}`;
     }
-    const response = await fetch(url_menu);
+    const response = await fetch(url);
     if (!response.ok) throw new Error("Network response was not ok");
 
     const data = await response.json();

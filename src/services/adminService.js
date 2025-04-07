@@ -1,7 +1,8 @@
-import { API_BASE_URL as url } from "../config";
+import { getApiUrl } from "../configs/apiConfig";
 
 // Функция для получения всех элементов меню
 export const fetchMenuItems = async () => {
+  const url = getApiUrl();
   try {
     const response = await fetch(`${url}/api/MenuItem`);
     if (!response.ok) throw new Error("Network response was not ok");
@@ -21,6 +22,7 @@ export const fetchMenuItems = async () => {
 
 // Функция для добавления нового блюда
 export const addMenuItem = async (newDish) => {
+  const url = getApiUrl();
   try {
     const response = await fetch(`${url}/api/MenuItem`, {
       method: "POST",
@@ -39,6 +41,7 @@ export const addMenuItem = async (newDish) => {
 
 // Функция для обновления блюда
 export const updateMenuItem = async (item) => {
+  const url = getApiUrl();
   try {
     const response = await fetch(`${url}/api/MenuItem/${item.id}`, {
       method: "PUT",
@@ -56,6 +59,7 @@ export const updateMenuItem = async (item) => {
 
 // Функция для удаления блюда
 export const deleteMenuItem = async (id) => {
+  const url = getApiUrl();
   try {
     const response = await fetch(`${url}/api/MenuItem/${id}`, {
       method: "DELETE",

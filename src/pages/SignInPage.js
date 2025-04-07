@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
+import { getApiUrl } from "../configs/apiConfig";
 
 const SignInPage = () => {
   const [email, setEmail] = useState("");
@@ -23,7 +24,8 @@ const SignInPage = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5253/api/User/login", {
+      const url = getApiUrl();
+      const response = await fetch(`${url}/api/User/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,8 +83,8 @@ const SignInPage = () => {
               />
             </div>
             <div className="mb-4 text-center">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="text-[rgb(255,204,1)] hover:underline"
                 onClick={() => navigate("/forgot-password")}
               >
@@ -90,18 +92,18 @@ const SignInPage = () => {
               </button>
             </div>
             <div className="flex justify-between items-center">
-                <button
-                type="button"
-                onClick={() => navigate("/sign-up")}
-                className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors"
-              >
-                Регистрация
-              </button>
               <button
                 type="submit"
                 className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors"
               >
                 Войти
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/sign-up")}
+                className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors"
+              >
+                Регистрация
               </button>
             </div>
           </form>

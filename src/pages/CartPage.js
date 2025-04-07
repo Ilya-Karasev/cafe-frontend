@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaShoppingCart, FaCreditCard, FaMoneyCheckAlt } from "react-icons/fa";
 import Footer from "../components/Footer";
 import MenuItem from "../components/MenuItem";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
-import {FaShoppingCart, FaCreditCard, FaMoneyCheckAlt } from "react-icons/fa";
-import { API_BASE_URL as url } from "../config";
+import { getApiUrl } from "../configs/apiConfig";
 
 const CartPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -17,6 +16,8 @@ const CartPage = () => {
   const [unavailableItems, setUnavailableItems] = useState([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState(null);
+
+  const url = getApiUrl();
 
   const updateItemQuantity = (itemId, newQuantity) => {
     setOrdersData((prevOrders) => {
@@ -39,12 +40,12 @@ const CartPage = () => {
         setLoading(true);
         const userData = localStorage.getItem("currentUser");
         if (!userData) return;
-  
+
         const user = JSON.parse(userData);
         let orders = [];
         let history = [];
         let unavailable = [];
-  
+
         // Получение текущей корзины
         if (user.cartId) {
           const cartResponse = await fetch(`${url}/api/Cart/${user.cartId}`);
@@ -57,7 +58,7 @@ const CartPage = () => {
             });
           }
         }
-  
+
         // Запрос всех заказов пользователя
         const orderResponse = await fetch(`${url}/api/Order`);
         if (orderResponse.ok) {
@@ -71,14 +72,14 @@ const CartPage = () => {
               number: order.orderNumber
             }));
         }
-  
+
         // Получение недоступных товаров
         const menuItemsResponse = await fetch(`${url}/api/MenuItem`);
         if (menuItemsResponse.ok) {
           const menuItemsData = await menuItemsResponse.json();
           unavailable = menuItemsData.filter(item => !item.isAvailable);
         }
-  
+
         setUnavailableItems(unavailable);
         setOrdersData(orders);
         setOrderHistory(history);
@@ -88,9 +89,9 @@ const CartPage = () => {
         setLoading(false);
       }
     };
-  
+
     fetchOrders();
-  }, []);  
+  }, [url]);
 
   const handleDeleteOrder = (orderId) => {
     const orderToDelete = ordersData.find((order) => order.id === orderId);
@@ -102,9 +103,12 @@ const CartPage = () => {
     if (unavailableItems.length > 0 && ordersData.length > 0) {
       setOrdersData((prevOrders) => {
         return prevOrders.map((order) => {
-          const updatedItems = order.items.filter((item) =>
-            !unavailableItems.some((unavailableItem) => unavailableItem.id === item.id)
-          );
+          const updatedItems = order.items.map((item) => {
+            if (unavailableItems.some((unavailableItem) => unavailableItem.id === item.id)) {
+              return { ...item, isAvailable: false };
+            }
+            return { ...item, isAvailable: true };
+          });
           return { ...order, items: updatedItems };
         });
       });
@@ -233,7 +237,11 @@ const CartPage = () => {
               </h2>
               <div className="flex flex-wrap">
                 {selectedOrder.items.map((item) => (
-                  <MenuItem key={item.id} item={item} updateQuantity={updateItemQuantity} />
+                  <MenuItem
+                    key={item.id}
+                    item={{ ...item, isAvailable: item.isAvailable }}
+                    updateQuantity={updateItemQuantity}
+                  />
                 ))}
               </div>
             </div>
@@ -242,20 +250,19 @@ const CartPage = () => {
               <p>Выберите заказ для просмотра его содержимого</p>
             </div>
           )}
-            {/* Кнопка оплаты */}
-            <button
-              className="absolute bottom-4 right-4 bg-yellow-400 text-gray-900 p-6 rounded-full shadow-lg hover:bg-yellow-500 transition"
-              onClick={() => setIsPaymentModalOpen(true)}
-            >
-              <FaShoppingCart className="text-2xl" />
-            </button>
+          {/* Кнопка оплаты */}
+          <button
+            className="absolute bottom-4 right-4 bg-yellow-400 text-gray-900 p-4 rounded-full shadow-lg hover:bg-yellow-500 transition"
+            onClick={() => setIsPaymentModalOpen(true)}
+          >
+            <FaShoppingCart className="text-2xl" />
+          </button>
         </div>
 
         {/* Модальное окно оплаты */}
         {isPaymentModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="relative bg-gray-700 border-2 border-yellow-400 p-6 rounded-lg shadow-lg w-80">
-              
               {/* Кнопка закрытия в верхнем правом углу */}
               <button
                 className="absolute top-1 right-1 text-yellow-400 hover:text-yellow-500 transition"
