@@ -93,17 +93,17 @@ const SignInPage = () => {
             </div>
             <div className="flex justify-between items-center">
               <button
-                type="submit"
-                className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors"
-              >
-                Войти
-              </button>
-              <button
                 type="button"
                 onClick={() => navigate("/sign-up")}
                 className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors"
               >
                 Регистрация
+              </button>
+              <button
+                type="submit"
+                className="bg-[rgb(36,34,39)] font-bold text-[rgb(255,204,1)] py-2 px-4 rounded hover:bg-[rgb(255,204,1)] hover:text-[rgb(36,34,39)] transition-colors"
+              >
+                Войти
               </button>
             </div>
           </form>
