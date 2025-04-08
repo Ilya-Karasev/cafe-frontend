@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
@@ -13,9 +13,11 @@ const EditAccountPage = () => {
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [userData, setUserData] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const navigate = useNavigate();
+  const imageRef = useRef(null);
 
-  const url = getApiUrl(); 
+  const url = getApiUrl();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");
@@ -25,45 +27,66 @@ const EditAccountPage = () => {
       setName(user.name || "");
       setPhone(user.phone || "");
       setEmail(user.email || "");
-      setUserIcon(user.userIcon || "");
+      // Подставляем в поле ввода всю строку фото из базы данных
+      setUserIcon(user.image || "");
+      setImagePreview(user.image || "");
       setPassword(user.password || "");
       setNewPassword(user.password || "");
     }
   }, []);
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setUserIcon(reader.result.split(",")[1]); // Сохраняем Base64-строку
-      };
-      reader.readAsDataURL(file);
+  const isValidImageUrl = (url) => /\.(jpeg|jpg|png)$/i.test(url);
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidPhone = (phone) => /^\d{10,15}$/.test(phone); // от 10 до 15 цифр
+
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    const textData = e.dataTransfer.getData("text");
+    if (isValidImageUrl(textData)) {
+      setUserIcon(textData);
+      setImagePreview(textData);
+    } else {
+      alert("Пожалуйста, вставьте корректную ссылку на изображение (.png/.jpg)");
     }
   };
+
+  const handleDragOver = (e) => e.preventDefault();
 
   const handleSave = async (e) => {
     e.preventDefault();
 
     if (!userData) {
-      console.error("Ошибка: пользователь не найден в localStorage");
+      console.error("Ошибка: пользователь не найден");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      alert("Введите корректный email");
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      alert("Введите корректный номер телефона (только цифры, от 10 до 15 символов)");
+      return;
+    }
+
+    if (userIcon && !isValidImageUrl(userIcon)) {
+      alert("Ссылка на изображение должна заканчиваться на .png или .jpg");
       return;
     }
 
     const updatedUser = {
-      id: userData.id,
       name,
       phone,
       email,
       password: newPassword || password,
+      // Отправляем то, что есть в поле ввода. Если поле пустое, берем старую ссылку.
+      image: userIcon || userData.image,
       isAdmin: userData.isAdmin,
       isActive: userData.isActive,
-      userIcon: userIcon || userData.userIcon, // Обновляем userIcon
     };
 
     try {
-      console.log("Отправляемый объект:", JSON.stringify(updatedUser, null, 2));
-
       const response = await fetch(`${url}/api/User/${userData.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -72,21 +95,11 @@ const EditAccountPage = () => {
 
       if (response.ok) {
         const updatedData = await response.json();
-
-        // Если загружена новая иконка, отправляем её
-        if (userIcon && userIcon !== userData.userIcon) {
-          await fetch(`${url}/api/User/${userData.id}/upload-icon`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: userIcon }),
-          });
-
-          updatedData.userIcon = userIcon; // Обновляем userIcon в данных пользователя
+        // Если после обновления в ответе нет поля image, устанавливаем его по значению отправленного объекта.
+        if (!updatedData.image) {
+          updatedData.image = updatedUser.image;
         }
-
-        localStorage.setItem("currentUser", JSON.stringify(updatedData));
-        setUserData(updatedData);
-
+        localStorage.setItem("currentUser", JSON.stringify({ ...updatedData, id: userData.id }));
         alert("Данные успешно обновлены!");
         navigate("/user-account");
       } else {
@@ -104,15 +117,31 @@ const EditAccountPage = () => {
       <div className="flex flex-grow items-center justify-center mt-6 mb-10">
         <div className="bg-black bg-opacity-50 p-8 rounded-lg shadow-lg w-full max-w-3xl flex">
           <div className="flex flex-col items-center mr-8">
-            <img
-              src={`data:image/png;base64,${userIcon}`} // Отображение иконки
-              alt="Profile"
-              className="w-48 h-48 mb-6 rounded-xl"
-            />
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-48 h-48 mb-6 rounded-xl object-cover"
+              />
+            )}
             <label className="block text-[rgb(255,204,1)] font-bold mb-2 text-center">
-              Изменить иконку профиля
+              Ссылка на иконку профиля (.png / .jpg)
             </label>
-            <input type="file" onChange={handleImageUpload} className="text-[rgb(255,204,1)]" />
+            <input
+              type="text"
+              value={userIcon}
+              ref={imageRef}
+              onChange={(e) => {
+                setUserIcon(e.target.value);
+                if (isValidImageUrl(e.target.value)) {
+                  setImagePreview(e.target.value);
+                }
+              }}
+              onDrop={handleImageDrop}
+              onDragOver={handleDragOver}
+              className="w-full p-2 mb-6 border border-[rgb(36,34,39)] bg-black text-[rgb(255,204,1)] rounded"
+              placeholder="https://image.com/image.png"
+            />
             <Link to="/user-account" className="mt-20">
               <button className="bg-[rgb(255,204,1)] font-bold text-[rgb(36,34,39)] py-2 px-4 rounded hover:bg-[rgb(36,34,39)] hover:text-[rgb(255,204,1)] transition-colors">
                 Вернуться к профилю
