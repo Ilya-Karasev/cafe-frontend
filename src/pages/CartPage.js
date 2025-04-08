@@ -26,7 +26,6 @@ const CartPage = () => {
           const updatedItems = order.items
             .map((item) => (item.id === itemId ? { ...item, quantity: newQuantity } : item))
             .filter((item) => item.quantity > 0);
-
           return { ...order, items: updatedItems };
         }
         return order;
@@ -64,7 +63,7 @@ const CartPage = () => {
         if (orderResponse.ok) {
           const allOrders = await orderResponse.json();
           history = allOrders
-            .filter(order => order.userId === user.id) // Фильтруем заказы по userId
+            .filter(order => order.userId === user.id)
             .map(order => ({
               id: order.id,
               items: order.items || [],
@@ -115,13 +114,21 @@ const CartPage = () => {
     }
   }, [unavailableItems, ordersData]);
 
+  const calculateTotalPrice = (items) => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
   const handlePlaceOrder = async () => {
     if (!paymentMethod) return;
 
     const userData = localStorage.getItem("currentUser");
     if (!userData) return;
-
     const user = JSON.parse(userData);
+    const selectedOrderItems = selectedOrder?.items || [];
+    const totalPrice = calculateTotalPrice(selectedOrderItems);
+
+    const orderStatus = paymentMethod === "Cash" ? "Pending" : "Paid";
+    console.log("Оплата:", paymentMethod, "Статус заказа:", orderStatus);
 
     try {
       // Создание заказа
@@ -130,7 +137,11 @@ const CartPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cartId: user.cartId,
+          userId: user.id,
           paymentMethod,
+          status: orderStatus,
+          items: selectedOrderItems,
+          totalPrice,
         }),
       });
 
@@ -139,14 +150,24 @@ const CartPage = () => {
         return;
       }
 
+      const createdOrder = await orderResponse.json();
+      const orderId = createdOrder.id;
+
       // Очистка корзины
       await fetch(`${url}/api/Cart/user/${user.id}/clear`, {
         method: "DELETE",
       });
 
-      // Закрытие модального окна и переход на главную страницу
       setIsPaymentModalOpen(false);
-      window.location.href = "/";
+
+      if (paymentMethod === "Credit Card" || "FPS" ) {
+        // Перенаправляем на страницу платежей.
+        // Параметры передаются через query-параметры: orderId, paymentMethod и amount.
+        window.location.href = `/payment?orderId=${orderId}&paymentMethod=${paymentMethod}&amount=${totalPrice}`;
+      } else {
+        // Для других способов оплаты сразу возвращаемся на главную страницу.
+        window.location.href = "/";
+      }
     } catch (error) {
       console.error("Ошибка при оформлении заказа:", error);
     }
@@ -228,7 +249,7 @@ const CartPage = () => {
           </div>
         </div>
 
-        {/* Список товаров из выбранного заказа справа */}
+        {/* Список товаров из выбранного заказа */}
         <div className="flex-grow p-4 relative">
           {selectedOrder ? (
             <div>
@@ -250,7 +271,7 @@ const CartPage = () => {
               <p>Выберите заказ для просмотра его содержимого</p>
             </div>
           )}
-          {/* Кнопка оплаты */}
+          {/* Кнопка оформления заказа */}
           <button
             className="absolute bottom-4 right-4 bg-yellow-400 text-gray-900 p-4 rounded-full shadow-lg hover:bg-yellow-500 transition"
             onClick={() => setIsPaymentModalOpen(true)}
@@ -259,11 +280,11 @@ const CartPage = () => {
           </button>
         </div>
 
-        {/* Модальное окно оплаты */}
+        {/* Модальное окно выбора способа оплаты */}
         {isPaymentModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="relative bg-gray-700 border-2 border-yellow-400 p-6 rounded-lg shadow-lg w-80">
-              {/* Кнопка закрытия в верхнем правом углу */}
+              {/* Кнопка закрытия модального окна */}
               <button
                 className="absolute top-1 right-1 text-yellow-400 hover:text-yellow-500 transition"
                 onClick={() => setIsPaymentModalOpen(false)}
@@ -275,7 +296,6 @@ const CartPage = () => {
                 Выберите способ оплаты
               </h2>
 
-              {/* Выбор способа оплаты */}
               <div className="flex flex-col gap-4">
                 <button
                   className={`flex items-center justify-center gap-2 p-3 rounded-md text-lg w-full
@@ -289,6 +309,16 @@ const CartPage = () => {
 
                 <button
                   className={`flex items-center justify-center gap-2 p-3 rounded-md text-lg w-full
+                    ${paymentMethod === "Cash" ? "bg-yellow-400 text-gray-900" : "bg-gray-800 text-white"}
+                    hover:bg-yellow-500 transition`}
+                  onClick={() => setPaymentMethod("Cash")}
+                >
+                  <FaMoneyCheckAlt className="text-2xl" />
+                  <span>Наличными</span>
+                </button>
+
+                <button
+                  className={`flex items-center justify-center gap-2 p-3 rounded-md text-lg w-full
                     ${paymentMethod === "FPS" ? "bg-yellow-400 text-gray-900" : "bg-gray-800 text-white"}
                     hover:bg-yellow-500 transition`}
                   onClick={() => setPaymentMethod("FPS")}
@@ -298,7 +328,7 @@ const CartPage = () => {
                 </button>
               </div>
 
-              {/* Кнопка "Оформить заказ" */}
+              {/* Кнопка оформления заказа */}
               <button
                 className="mt-6 w-full bg-gray-900 text-yellow-400 py-2 rounded-md text-lg hover:bg-gray-800 transition"
                 onClick={handlePlaceOrder}

@@ -9,6 +9,7 @@ import OrderProcessingPage from "./pages/OrderProcessingPage";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import UserAccountPage from "./pages/UserAccountPage";
+import PaymentPage from "./pages/PaymentPage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/admin-panel" element={<AdminPanelPage />} />
         <Route path="/order-panel" element={<OrderProcessingPage />} />
+        <Route path="/payment" element={<PaymentPage />} />
       </Routes>
     </Router>
   );
