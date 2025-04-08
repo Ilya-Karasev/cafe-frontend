@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { markOrderAsPaid } from "../services/orderService"; 
 
 const PaymentPage = () => {
   const [searchParams] = useSearchParams();
@@ -10,18 +11,25 @@ const PaymentPage = () => {
   const amount = searchParams.get("amount");
 
   const [processing, setProcessing] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState(null); // "success" после успешной оплаты
+  const [paymentStatus, setPaymentStatus] = useState(null);
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async () => {
     setProcessing(true);
-    setTimeout(() => {
+    try {
+      if (orderId) {
+        await markOrderAsPaid(orderId);
+      }
+      setTimeout(() => {
+        setProcessing(false);
+        setPaymentStatus("success");
+      }, 1000); // можно сократить таймер, если нужно
+    } catch (error) {
+      console.error("Ошибка при обновлении статуса заказа:", error);
       setProcessing(false);
-      setPaymentStatus("success");
-    }, 2000);
+    }
   };
 
   const handlePaymentFailure = () => {
-    // При отказе оплаты сразу перенаправляем на главную страницу
     navigate("/");
   };
 

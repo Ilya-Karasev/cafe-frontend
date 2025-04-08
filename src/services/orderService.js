@@ -59,3 +59,19 @@ export const fetchOrderDetails = async (orderId) => {
     throw error;
   }
 };
+
+// Функция для установки статуса "Оплачен"
+export const markOrderAsPaid = async (orderId) => {
+  const url = getApiUrl();
+  try {
+    const response = await fetch(`${url}/api/Order/${orderId}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "Paid" }),
+    });
+    if (!response.ok) throw new Error("Failed to mark order as paid");
+  } catch (error) {
+    console.error("Error marking order as paid:", error);
+    throw error;
+  }
+};
