@@ -58,7 +58,7 @@ const SignInPage = () => {
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label className="block text-[rgb(255,204,1)] font-bold mb-2" htmlFor="email">
-                Логин
+                Электронная почта
               </label>
               <input
                 type="text"
@@ -82,7 +82,7 @@ const SignInPage = () => {
                 required
               />
             </div>
-            <div className="mb-4 text-center">
+            {/* <div className="mb-4 text-center">
               <button
                 type="button"
                 className="text-[rgb(255,204,1)] hover:underline"
@@ -90,8 +90,8 @@ const SignInPage = () => {
               >
                 Забыли логин / пароль?
               </button>
-            </div>
-            <div className="flex justify-between items-center">
+            </div> */}
+            <div className="flex justify-between items-center mt-8">
               <button
                 type="button"
                 onClick={() => navigate("/sign-up")}

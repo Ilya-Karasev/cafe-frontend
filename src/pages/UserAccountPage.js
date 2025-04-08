@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../style/WebsiteBackground.css";
+import { getApiUrl } from "../configs/apiConfig";
 
 const UserAccountPage = () => {
   const navigate = useNavigate();
@@ -28,9 +29,35 @@ const UserAccountPage = () => {
     if (user.userIcon) {
       return `data:${user.imageType};base64,${user.userIcon}`;
     } else if (user.image) {
-      return `${user.image}`
+      return `${user.image}`;
     }
     return "https://yt3.googleusercontent.com/ytc/AIdro_nz_cQxd22UhHWPFSheene_FOQEDrI1gDYuWMfHYhg0iQ=s900-c-k-c0x00ffffff-no-rj";
+  };
+
+  const handleDeleteAccount = async () => {
+    const url = getApiUrl();
+    
+    try {
+      // Отправляем DELETE запрос для удаления пользователя
+      const response = await fetch(`${url}/api/User/${user.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Успешное удаление, очищаем localStorage и перенаправляем на главную
+        localStorage.removeItem("currentUser");
+        navigate("/");
+        alert("Ваш аккаунт был удалён.");
+      } else {
+        alert("Ошибка при удалении аккаунта.");
+      }
+    } catch (error) {
+      console.error("Ошибка при удалении аккаунта:", error);
+      alert("Ошибка соединения с сервером.");
+    }
   };
 
   return (
@@ -70,7 +97,10 @@ const UserAccountPage = () => {
             <p className="mb-4 text-white">
               <strong>Почта:</strong> {user.email}
             </p>
-            <button className="bg-yellow-500 font-bold text-black py-2 px-4 rounded hover:bg-black hover:text-yellow-500 transition-colors duration-300">
+            <button
+              onClick={handleDeleteAccount}
+              className="bg-red-500 font-bold text-white py-2 px-4 rounded hover:bg-red-700 transition-colors duration-300"
+            >
               Удалить аккаунт
             </button>
           </div>
