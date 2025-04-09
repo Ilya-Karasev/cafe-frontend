@@ -38,7 +38,7 @@ const HomePage = () => {
       fetch(`${url}/api/Cart/user/${user.id}`)
         .then(response => response.json())
         .then(data => {
-          setCartItems(data.items);
+          setCartItems(data.items || []);
         })
         .catch(error => console.error("Error fetching cart data:", error));
     }
@@ -82,6 +82,11 @@ const HomePage = () => {
     });
   };
 
+  const getQuantityById = (id) => {
+    const item = cartItems.find(cartItem => cartItem.id === id);
+    return item ? item.quantity : 0;
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <NavbarMenu
@@ -98,15 +103,13 @@ const HomePage = () => {
         )}
         {error && <p>{error}</p>}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 justify-items-center">
-          {filteredMenuItems.length > 0 &&
-            filteredMenuItems.map((item) => (
-              <MenuItem
-                key={item.id}
-                item={item}
-                cartItems={cartItems}
-                updateCart={updateCart}
-              />
-            ))}
+          {filteredMenuItems.map((item) => (
+            <MenuItem
+              key={item.id}
+              item={{ ...item, quantity: getQuantityById(item.id) }}
+              updateCart={updateCart}
+            />
+          ))}
         </div>
       </div>
       <Footer />

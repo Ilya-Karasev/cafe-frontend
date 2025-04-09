@@ -184,7 +184,7 @@ const OrderProcessingPage = () => {
                       <h3 className="text-lg font-semibold text-[rgb(255,204,1)]">
                         {item.title}
                       </h3>
-                      <p className="text-white">Цена: {item.price}₽</p>
+                      <p className="text-white">Цена: {item.quantity} * {item.price}₽</p>
                     </div>
                   </div>
                 ))}

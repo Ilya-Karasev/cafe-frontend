@@ -8,9 +8,9 @@ const MenuItem = ({ item, updateCart }) => {
   const [quantity, setQuantity] = useState(0);
   const [cartItems, setCartItems] = useState([]);
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
-  const [isAvailable, setIsAvailable] = useState(true);
 
   const url = getApiUrl();
+  const isAvailable = item.isAvailable;
 
   useEffect(() => {
     const userData = localStorage.getItem("currentUser");
@@ -35,41 +35,29 @@ const MenuItem = ({ item, updateCart }) => {
     }
   }, [cartItems, item.id]);
 
-  useEffect(() => {
-    fetch(`${url}/api/MenuItem/${item.id}`)
-      .then(response => response.json())
-      .then(data => {
-        setIsAvailable(data.isAvailable);
-      })
-      .catch(error => {
-        console.error("Error fetching item availability:", error);
-      });
-  }, [item.id, url]);
-
   const increaseQuantity = () => {
     setIsLoadingPrice(true);
-    setQuantity(prevQuantity => prevQuantity + 1);
     addToCart();
   };
-
+  
   const decreaseQuantity = () => {
-    if (quantity > 0) {
-      if (quantity === 1) setIsLoadingPrice(false); // Избегаем зависания спиннера при удалении последней порции
-      setQuantity(prevQuantity => prevQuantity - 1);
+    setIsLoadingPrice(true);
+    if (item.quantity > 0) {
+      if (item.quantity === 1) setIsLoadingPrice(false); // Избегаем зависания спиннера при удалении последней порции
       removeFromCart();
     }
   };
-
+  
   useEffect(() => {
-    if (quantity > 0) {
+    if (item.quantity > 0) {
       setTimeout(() => {
         setIsLoadingPrice(false);
       }, 500);
     } else {
-      setIsLoadingPrice(false); // Если блюдо удалено, сразу отключаем спиннер
+      setIsLoadingPrice(false);
     }
-  }, [quantity]);
-
+  }, [item.quantity]);
+  
   const removeItemCompletely = () => {
     const userData = localStorage.getItem("currentUser");
     if (userData) {
@@ -80,7 +68,6 @@ const MenuItem = ({ item, updateCart }) => {
       })
         .then(response => {
           if (response.ok) {
-            setQuantity(0);
             setIsLoadingPrice(false);
             updateCart(item.id, 0);
           }
@@ -88,7 +75,7 @@ const MenuItem = ({ item, updateCart }) => {
         .catch(error => console.error("Error removing item from cart:", error));
     }
   };
-
+  
   const removeFromCart = () => {
     const userData = localStorage.getItem("currentUser");
     if (userData) {
@@ -97,13 +84,24 @@ const MenuItem = ({ item, updateCart }) => {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       })
-        .then(response => {
-          if (response.ok) updateCart(item.id, quantity - 1);
+        .then(async response => {
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text);
+          }
+          return response.json();
         })
-        .catch(error => console.error("Error removing item from cart:", error));
+        .then(data => {
+          if (data.success) {
+            updateCart(item.id, item.quantity - 1); // Исправление: уменьшаем количество
+          }
+        })
+        .catch(error => {
+          console.error("Error removing item from cart:", error.message);
+        });      
     }
   };
-
+  
   const addToCart = () => {
     const userData = localStorage.getItem("currentUser");
     if (userData) {
@@ -115,7 +113,7 @@ const MenuItem = ({ item, updateCart }) => {
       })
         .then(response => response.json())
         .then(data => {
-          if (data.success) updateCart(item.id, quantity);
+          if (data.success) updateCart(item.id, item.quantity + 1);
         })
         .catch(error => console.error("Error adding item to cart:", error));
     }
@@ -157,13 +155,13 @@ const MenuItem = ({ item, updateCart }) => {
       )}
       <h3 className="text-lg text-black mb-2">{item.title}</h3>
       <div className="text-lg mx-2 mb-2">
-        {isLoadingPrice ? (
-          <ImSpinner8 className="animate-spin text-yellow-500 text-2xl" />
-        ) : quantity > 0 ? (
-          <>{quantity * item.price} ₽</>
-        ) : (
-          <>{item.price} ₽</>
-        )}
+      {isLoadingPrice ? (
+        <ImSpinner8 className="animate-spin text-yellow-500 text-2xl" />
+      ) : item.quantity > 0 ? (
+        <>{item.quantity * item.price} ₽</>
+      ) : (
+        <>{item.price} ₽</>
+      )}
       </div>
       <div className="flex items-center justify-between w-full">
         <button
@@ -173,7 +171,7 @@ const MenuItem = ({ item, updateCart }) => {
           <FaMinusCircle />
         </button>
 
-        {quantity > 0 && <span className="text-lg mx-4">{quantity}</span>}
+        {item.quantity > 0 && <span className="text-lg mx-4">{item.quantity}</span>}
 
         <button
           className="bg-black text-yellow-500 rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-800 active:bg-gray-900 transition-colors duration-150"
